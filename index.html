@@ -588,7 +588,8 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
           <h3 style="font-size:1.1rem; font-weight:700;">Gestión de Cuentas y Permisos</h3>
           <div style="display:flex; gap:8px;">
-            <button class="btn btn-secondary" onclick="sincronizzaCollaboratoriEsistenti()">🔄 Sincronizar Existentes</button>
+            <button class="btn btn-secondary" onclick="sincronizzaCollaboratoriEsistenti()" style="margin-right:4px;">🔄 Sincronizar Existentes</button>
+            <button class="btn btn-danger" onclick="limpiarAdminsDuplicados()" style="margin-right:4px;" title="Eliminar admins duplicados y cuentas falsas">🧹 Limpiar Duplicados</button>
             <button class="btn btn-primary" onclick="openModalAddUser()">➕ Nuevo Colaborador</button>
           </div>
         </div>
@@ -743,10 +744,20 @@
       <div id="admin-tab-configurazione" class="admin-subview" style="display:none;">
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
           <div class="card">
-            <div class="card-title">🏢 Apartamentos Gestionados</div>
-            <p style="color:var(--text-muted); font-size:0.84rem; margin-bottom:12px;">Un apartamento por línea</p>
-            <textarea id="cfg-apartamentos" rows="8" style="width:100%; margin-bottom:14px;"></textarea>
-            <button class="btn btn-primary" onclick="salvaConfigurazioneApp()">Guardar Apartamentos</button>
+            <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
+              🏢 Gestión de Apartamentos
+              <button class="btn btn-sm btn-primary" onclick="showAddApartamentoForm()">➕ Nuevo Apartamento</button>
+            </div>
+            <div id="apt-add-form" style="display:none; margin-bottom:16px; padding:12px; background:var(--surface-hover); border-radius:8px;">
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input type="text" id="new-apt-name" placeholder="Nombre del apartamento" style="flex:1;">
+                <button class="btn btn-sm btn-primary" onclick="addApartamento()">Añadir</button>
+                <button class="btn btn-sm" onclick="document.getElementById('apt-add-form').style.display='none'">✕</button>
+              </div>
+            </div>
+            <div id="apt-list-container">
+              <p style="color:var(--text-muted); font-size:0.85rem;">Cargando...</p>
+            </div>
           </div>
 
           <div class="card">
@@ -2103,14 +2114,29 @@
     }
 
     async function eliminaUser(email) {
-      if (!confirm("¿Seguro que deseas eliminar este colaborador?\n\nEl historial de pagos se conservará y las limpiezas futuras quedarán por reasignar.")) return;
+      if (!confirm("¿Seguro que deseas eliminar este colaborador permanentemente?\n\nEsta acción no se puede deshacer.")) return;
       try {
-        const res = await apiCall("eliminarUsuario", { id: email });
+        const res = await apiCall("eliminarUsuarioPermanente", { id: email });
         if (res && res.success) {
-          toast("Colaborador eliminado (historial conservado)", "info");
+          toast("Colaborador eliminado correctamente", "success");
           loadAdminUtenti();
         } else {
           toast(res.error || "Error al eliminar", "error");
+        }
+      } catch (err) {
+        toast("Error de red al eliminar", "error");
+      }
+    }
+
+    async function limpiarAdminsDuplicados() {
+      if (!confirm("¿Eliminar todos los administradores duplicados y cuentas @pulizie.app?\n\nSe conservará solo: alcamaservice@gmail.com")) return;
+      try {
+        const res = await apiCall("limpiarAdminsDuplicados");
+        if (res && res.success) {
+          toast("Limpieza completada: " + (res.deleted || []).join(", "), "success");
+          loadAdminUtenti();
+        } else {
+          toast(res.error || "Error", "error");
         }
       } catch (err) {
         toast("Error de red", "error");
@@ -2392,8 +2418,10 @@
     // --- Configurazione App (Admin) ---
     async function loadAdminConfig() {
       await loadAppConfig();
-      document.getElementById('cfg-apartamentos').value = (APP_CONFIG.apartamentos || []).join('\n');
-      document.getElementById('cfg-encargados').value = (APP_CONFIG.encargados || []).map(e => typeof e==='object'?(e.nombre||''):e).join('\n');
+      // cfg-apartamentos is now managed via loadApartamentosConfig()
+      loadApartamentosConfig();
+      const cfgEnc = document.getElementById('cfg-encargados');
+      if (cfgEnc) cfgEnc.value = (APP_CONFIG.encargados || []).map(e => typeof e==='object'?(e.nombre||''):e).join('\n');
     }
 
     async function salvaConfigurazioneApp() {
@@ -2408,6 +2436,87 @@
           toast(res.error || "Error al guardar", "error");
         }
       } catch (err) {
+        toast("Error de red", "error");
+      }
+    }
+
+
+    function showAddApartamentoForm() {
+      const form = document.getElementById('apt-add-form');
+      if (form) { form.style.display = form.style.display === 'none' ? 'block' : 'none'; }
+    }
+
+    async function loadApartamentosConfig() {
+      try {
+        const res = await apiCall("getApartamentos");
+        const list = (res && res.success) ? (res.apartamentos || []) : [];
+        renderApartamentosList(list);
+      } catch (e) {
+        console.warn("Error loading apartamentos:", e);
+      }
+    }
+
+    function renderApartamentosList(list) {
+      const container = document.getElementById('apt-list-container');
+      if (!container) return;
+      if (!list || list.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">No hay apartamentos configurados.</p>';
+        return;
+      }
+      let h = '<table style="width:100%; border-collapse:collapse;">';
+      h += '<thead><tr><th style="text-align:left; padding:8px; color:var(--text-muted); font-size:0.8rem; border-bottom:1px solid var(--surface-border);">Apartamento</th>';
+      h += '<th style="text-align:right; padding:8px; border-bottom:1px solid var(--surface-border);"></th></tr></thead><tbody>';
+      list.forEach((apt, idx) => {
+        h += '<tr>';
+        h += '<td style="padding:10px 8px;"><span class="badge badge-apt">' + apt + '</span></td>';
+        h += '<td style="text-align:right; padding:10px 8px;">';
+        h += '<button class="btn btn-sm btn-danger" onclick="deleteApartamento(' + idx + ')" title="Eliminar apartamento">🗑️</button>';
+        h += '</td></tr>';
+      });
+      h += '</tbody></table>';
+      container.innerHTML = h;
+    }
+
+    async function addApartamento() {
+      const input = document.getElementById('new-apt-name');
+      const nombre = (input ? input.value.trim() : '');
+      if (!nombre) { toast("Escribe el nombre del apartamento", "error"); return; }
+      try {
+        const res = await apiCall("getApartamentos");
+        const list = (res && res.success) ? (res.apartamentos || []) : [];
+        if (list.includes(nombre)) { toast("El apartamento ya existe", "error"); return; }
+        list.push(nombre);
+        const saveRes = await apiCall("saveApartamentos", { lista: list });
+        if (saveRes && saveRes.success) {
+          toast("Apartamento añadido correctamente", "success");
+          if (input) input.value = '';
+          document.getElementById('apt-add-form').style.display = 'none';
+          await loadAppConfig();
+          loadApartamentosConfig();
+        } else {
+          toast(saveRes.error || "Error al guardar", "error");
+        }
+      } catch (e) {
+        toast("Error de red", "error");
+      }
+    }
+
+    async function deleteApartamento(idx) {
+      if (!confirm("¿Eliminar este apartamento de la lista?")) return;
+      try {
+        const res = await apiCall("getApartamentos");
+        const list = (res && res.success) ? (res.apartamentos || []) : [];
+        const nombre = list[idx];
+        list.splice(idx, 1);
+        const saveRes = await apiCall("saveApartamentos", { lista: list });
+        if (saveRes && saveRes.success) {
+          toast("Apartamento '" + nombre + "' eliminado", "success");
+          await loadAppConfig();
+          loadApartamentosConfig();
+        } else {
+          toast(saveRes.error || "Error", "error");
+        }
+      } catch (e) {
         toast("Error de red", "error");
       }
     }
