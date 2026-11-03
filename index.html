@@ -1239,17 +1239,18 @@
         btn.innerText = "Accedi";
 
         if (res && res.success) {
+          const u = res.user || res;
           SESSION.token = res.token;
-          SESSION.email = res.user.email;
-          SESSION.nombre = res.user.nombre;
-          SESSION.role = res.user.role;
-          SESSION.encargadoKey = res.user.encargadoKey;
+          SESSION.email = u.email || "";
+          SESSION.nombre = u.nombre || "";
+          SESSION.role = u.role || "";
+          SESSION.encargadoKey = u.encargadoKey || "";
 
           localStorage.setItem("CP_TOKEN", SESSION.token);
           localStorage.setItem("CP_EMAIL", SESSION.email);
           localStorage.setItem("CP_NOMBRE", SESSION.nombre);
           localStorage.setItem("CP_ROLE", SESSION.role);
-          localStorage.setItem("CP_ENCKEY", SESSION.encargadoKey || "");
+          localStorage.setItem("CP_ENCKEY", SESSION.encargadoKey);
 
           toast("Accesso effettuato con successo!", "success");
           showAppView();
@@ -1259,7 +1260,8 @@
       } catch (err) {
         btn.disabled = false;
         btn.innerText = "Accedi";
-        toast("Errore di connessione: verifica l'URL dello script", "error");
+        console.error("Login catch error:", err);
+        toast("Errore (" + (err.name || "Errore") + "): " + (err.message || "Verifica la connessione"), "error");
       }
     }
 
