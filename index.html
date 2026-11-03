@@ -552,7 +552,8 @@
               <option value="">Todos</option>
             </select>
           </div>
-          <div style="margin-left:auto;">
+          <div style="display:flex; align-items:center; gap:10px; margin-left:auto;">
+            <span class="badge" id="admin-dias-libres-badge" style="background:rgba(239,68,68,0.2); color:#f87171; border:1px solid #ef4444; font-weight:700; padding:6px 14px; font-size:0.84rem;">📅 Total Días Libres: 0</span>
             <button class="btn btn-primary" onclick="openModalAddRiga()">➕ Nueva Limpieza</button>
           </div>
         </div>
@@ -567,6 +568,7 @@
                   <th>Horario</th>
                   <th>Preparar Para</th>
                   <th>Próxima Entrada</th>
+                  <th>Días Libres</th>
                   <th>Notas Admin</th>
                   <th>Encargado/a</th>
                   <th>Notas Encargado</th>
@@ -694,7 +696,7 @@
                   <th>Colaborador</th>
                   <th>N. Limpiezas</th>
                   <th>Tarifa/u</th>
-                  <th>Gastos Aprobados</th>
+                  <th>Gastos Aprobados</th><th>Gastos Pendientes</th>
                   <th>Total (€)</th>
                   <th>Estado</th>
                   <th>Fecha Pago</th>
@@ -721,6 +723,7 @@
                 <tr>
                   <th>Fecha</th>
                   <th>Colaborador</th>
+                  <th>Apartamento</th>
                   <th>Periodo</th>
                   <th>Concepto</th>
                   <th>Importe</th>
@@ -813,6 +816,7 @@
           </div>
           <div style="margin-left:auto;">
             <span class="badge badge-enc" id="collab-count-badge">0 Limpiezas</span>
+            <span class="badge" id="collab-dias-libres-badge" style="background:rgba(239,68,68,0.2); color:#f87171; border:1px solid #ef4444; font-weight:700; padding:6px 12px; font-size:0.82rem; margin-left:8px;">📅 Total Días Libres: 0</span>
           </div>
         </div>
 
@@ -869,6 +873,7 @@
               <thead>
                 <tr>
                   <th>Fecha</th>
+                  <th>Apartamento</th>
                   <th>Concepto</th>
                   <th>Importe (€)</th>
                   <th>Estado</th>
@@ -995,6 +1000,12 @@
           <select id="gasto-encargado"></select>
         </div>
         <div class="form-group">
+          <label>Apartamento Asignado (Requerido)</label>
+          <select id="gasto-apartamento" required>
+            <option value="">Selecciona un apartamento...</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label>Concepto / Descripción del Gasto</label>
           <input type="text" id="gasto-concepto" required placeholder="Ej: Compra de lejía, bolsas y detergente">
         </div>
@@ -1032,23 +1043,36 @@
           <input type="date" id="riga-fecha" required>
         </div>
         <div class="form-group">
-          <label>Horario</label>
-          <input type="text" id="riga-horario" placeholder="Ej: 10:00">
+          <label>Horario de Limpieza</label>
+          <input type="text" id="riga-horario" value="10:00" placeholder="10:00" required>
         </div>
         <div class="form-group">
-          <label>Preparar Para</label>
+          <label>Preparar Para (Personas / Camas)</label>
           <input type="text" id="riga-preparar" placeholder="Ej: 2 PAX (Cama matrimonio)">
         </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label>Fecha Entrada Próximos Huéspedes</label>
+            <input type="date" id="riga-fecha-entrada" onchange="calcularDiasLibresModal()" required>
+          </div>
+          <div class="form-group">
+            <label>Hora de Entrada</label>
+            <input type="text" id="riga-hora-entrada" value="15:00" placeholder="15:00" required>
+          </div>
+        </div>
         <div class="form-group">
-          <label>Entrada Próximos Huéspedes</label>
-          <input type="text" id="riga-entrada" placeholder="Ej: 15:00">
+          <label>Días Libres entre Limpieza y Próxima Entrada</label>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <input type="number" id="riga-dias-libres" readonly value="0" style="width:90px; font-weight:700; color:#ef4444; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); text-align:center;">
+            <span id="riga-dias-libres-txt" style="font-size:0.84rem; color:var(--text-muted);">Mismo día (0 días libres)</span>
+          </div>
         </div>
         <div class="form-group">
           <label>Notas Administrador</label>
           <input type="text" id="riga-notas" placeholder="Ej: Poner cuna en habitación">
         </div>
         <div class="form-group" style="margin-bottom:20px;">
-          <label>Incaricato/a</label>
+          <label>Colaborador / Encargado</label>
           <select id="riga-encargado" required></select>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:10px;">
@@ -1059,7 +1083,7 @@
     </div>
   </div>
 
-  <!-- Modal: Nota Incaricato -->
+  <!-- Modal: Nota Encargado -->
   <div class="modal-overlay" id="modal-nota-enc">
     <div class="modal">
       <div class="modal-header">
@@ -1300,7 +1324,7 @@
         case 'preparar': return r.preparar || r['PREPARAR PARA'] || r['Preparar'] || '-';
         case 'entrada': return r.entrada || r['ENTRADA PROXIMOS'] || r['Entrada'] || '-';
         case 'notas': return r.notas || r['NOTAS ADMIN'] || r['Notas'] || '-';
-        case 'encargado': return r.encargado || r['ENCARGADO/A'] || r['ENCARGADO'] || r['Encargado'] || 'Da assegnare';
+        case 'encargado': return r.encargado || r['ENCARGADO/A'] || r['ENCARGADO'] || r['Encargado'] || 'Sin asignar';
         case 'notaEncargado': return r.notaEncargado || r['NOTA ENCARGADO'] || r['Nota Encargado'] || '';
         default: return r[field] || '';
       }
@@ -1615,14 +1639,16 @@
     }
 
     // --- Calendario Admin ---
-    async function loadAdminCalendario() {
+    async function loadAdminCalendario(isSilent = false) {
       const mes = document.getElementById('admin-filter-mes').value;
       const anno = document.getElementById('admin-filter-anno').value;
       const enc = document.getElementById('admin-filter-enc').value;
       const apt = document.getElementById('admin-filter-apt').value;
-      const tbody = document.getElementById('tbody-admin-calendario');
 
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando calendario...</td></tr>';
+      const tbody = document.getElementById('tbody-admin-calendario');
+      if (!isSilent) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando calendario...</td></tr>';
+      }
 
       try {
         const res = await apiCall("getCalendario", { mes: mes, anno: anno, userFilter: enc, aptFilter: apt });
@@ -1630,17 +1656,28 @@
           CURRENT_CALENDARIO_ROWS = res.rows || res.data || [];
           renderAdminCalendarioTable(CURRENT_CALENDARIO_ROWS);
         } else {
-          tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Error") + '</td></tr>';
+          if (!isSilent) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Error") + '</td></tr>';
         }
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--danger);">Error de conexión</td></tr>';
+        if (!isSilent) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--danger);">Error de conexión</td></tr>';
       }
     }
 
     function renderAdminCalendarioTable(rows) {
       const tbody = document.getElementById('tbody-admin-calendario');
+      let totalDiasLibres = 0;
+
+      (rows || []).forEach(r => {
+        totalDiasLibres += parseInt(getCleanField(r, 'diasLibres')) || 0;
+      });
+
+      const badgeDias = document.getElementById('admin-dias-libres-badge');
+      if (badgeDias) {
+        badgeDias.innerText = "📅 Total Días Libres: " + totalDiasLibres + " días";
+      }
+
       if (!rows || rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">No hay limpiezas programadas para este periodo</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">No hay limpiezas registradas para este periodo y filtro</td></tr>';
         return;
       }
 
@@ -1652,36 +1689,79 @@
         const horario = getCleanField(r, 'horario');
         const preparar = getCleanField(r, 'preparar');
         const entrada = getCleanField(r, 'entrada');
+        const dLib = parseInt(getCleanField(r, 'diasLibres')) || 0;
         const notas = getCleanField(r, 'notas');
-        const encargado = getCleanField(r, 'encargado');
+        const enc = getCleanField(r, 'encargado');
         const notaEnc = getCleanField(r, 'notaEncargado');
 
         html += '<tr>';
         html += '<td><span class="badge badge-apt">' + apt + '</span></td>';
         html += '<td><strong>' + fecha + '</strong></td>';
-        html += '<td>' + horario + '</td>';
+        html += '<td>' + (horario !== '-' ? horario : '10:00') + '</td>';
         html += '<td>' + preparar + '</td>';
         html += '<td>' + entrada + '</td>';
-        html += '<td>' + notas + '</td>';
-        html += '<td><span class="badge badge-enc">' + encargado + '</span></td>';
-        html += '<td>' + (notaEnc ? '<span style="color:var(--primary); font-size:0.8rem;">💬 ' + notaEnc + '</span>' : '<span style="color:var(--text-muted);">-</span>') + '</td>';
+
+        if (dLib > 0) {
+          html += '<td><span class="badge" style="background:rgba(239,68,68,0.2); color:#f87171; border:1px solid #ef4444; font-weight:700;">' + dLib + ' días</span></td>';
+        } else {
+          html += '<td><span style="color:var(--text-muted); font-size:0.85rem;">0</span></td>';
+        }
+
+        html += '<td><span style="font-size:0.8rem; color:var(--text-muted);">' + notas + '</span></td>';
+        html += '<td><span class="badge badge-enc">' + enc + '</span></td>';
+        html += '<td>' + (notaEnc ? ('<span style="color:var(--primary); font-size:0.82rem;">💬 ' + notaEnc + '</span>') : '-') + '</td>';
         html += '<td style="text-align:right; white-space:nowrap;">';
-        html += '<button class="btn btn-sm" onclick="openModalEditRiga(\'' + id + '\')" style="margin-right:6px;" title="Editar">✏️</button>';
-        html += '<button class="btn btn-sm btn-danger" onclick="eliminaRiga(\'' + id + '\')" title="Eliminar">🗑️</button>';
+        html += '<button class="btn btn-sm btn-outline" onclick="openModalEditRiga(\'' + id + '\')">✏️ Editar</button> ';
+        html += '<button class="btn btn-sm btn-danger" onclick="eliminaRiga(\'' + id + '\')">🗑️</button>';
         html += '</td>';
         html += '</tr>';
       });
+
       tbody.innerHTML = html;
+    }
+
+    function calcularDiasLibresModal() {
+      const fLimp = document.getElementById('riga-fecha').value;
+      const fEnt = document.getElementById('riga-fecha-entrada').value;
+      if (!fLimp || !fEnt) return;
+      const d1 = new Date(fLimp);
+      const d2 = new Date(fEnt);
+      const diffTime = d2.getTime() - d1.getTime();
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+      const val = diffDays >= 0 ? diffDays : 0;
+      document.getElementById('riga-dias-libres').value = val;
+      const txtEl = document.getElementById('riga-dias-libres-txt');
+      if (val === 0) {
+        txtEl.innerText = "Mismo día (0 días libres)";
+        txtEl.style.color = "var(--text-muted)";
+      } else {
+        txtEl.innerText = val + " días libres";
+        txtEl.style.color = "#ef4444";
+      }
     }
 
     function openModalAddRiga() {
       document.getElementById('modal-riga-title').innerText = "Nueva Limpieza";
       document.getElementById('riga-id').value = "";
-      document.getElementById('riga-fecha').value = "";
+      document.getElementById('riga-apt').value = "";
+
+      const curMes = document.getElementById('admin-filter-mes').value || ((new Date().getMonth()+1)+'');
+      const curAnno = document.getElementById('admin-filter-anno').value || (new Date().getFullYear()+'');
+      const padMes = curMes.padStart(2, '0');
+      const defaultFecha = curAnno + "-" + padMes + "-01";
+      const today = new Date().toISOString().split('T')[0];
+      const initialFecha = today.startsWith(curAnno + "-" + padMes) ? today : defaultFecha;
+
+      document.getElementById('riga-fecha').value = initialFecha;
       document.getElementById('riga-horario').value = "10:00";
       document.getElementById('riga-preparar').value = "";
-      document.getElementById('riga-entrada').value = "";
+      document.getElementById('riga-fecha-entrada').value = initialFecha;
+      document.getElementById('riga-hora-entrada').value = "15:00";
+      document.getElementById('riga-dias-libres').value = "0";
+      document.getElementById('riga-dias-libres-txt').innerText = "Mismo día (0 días libres)";
+      document.getElementById('riga-dias-libres-txt').style.color = "var(--text-muted)";
       document.getElementById('riga-notas').value = "";
+      document.getElementById('riga-encargado').value = "";
       openModal('modal-riga');
     }
 
@@ -1691,12 +1771,68 @@
       document.getElementById('modal-riga-title').innerText = "Modificar Limpieza";
       document.getElementById('riga-id').value = getCleanField(r, 'id');
       document.getElementById('riga-apt').value = getCleanField(r, 'apartamento') !== '-' ? getCleanField(r, 'apartamento') : '';
-      document.getElementById('riga-fecha').value = getCleanField(r, 'fecha') !== '-' ? getCleanField(r, 'fecha') : '';
-      document.getElementById('riga-horario').value = getCleanField(r, 'horario') !== '-' ? getCleanField(r, 'horario') : '';
+
+      const fLimp = getCleanField(r, 'fecha') !== '-' ? getCleanField(r, 'fecha') : '';
+      document.getElementById('riga-fecha').value = fLimp;
+      document.getElementById('riga-horario').value = getCleanField(r, 'horario') !== '-' ? getCleanField(r, 'horario') : '10:00';
       document.getElementById('riga-preparar').value = getCleanField(r, 'preparar') !== '-' ? getCleanField(r, 'preparar') : '';
-      document.getElementById('riga-entrada').value = getCleanField(r, 'entrada') !== '-' ? getCleanField(r, 'entrada') : '';
+
+      const entRaw = (getCleanField(r, 'entrada') || '').trim();
+      let fEnt = fLimp;
+      let hEnt = "15:00";
+      if (entRaw && entRaw !== '-') {
+        if (entRaw.includes('(') && entRaw.includes(')')) {
+          const m = entRaw.match(/^(.*?)\s*\((.*?)\)$/);
+          if (m) {
+            fEnt = m[1].trim();
+            hEnt = m[2].trim();
+          }
+        } else if (entRaw.includes(' ')) {
+          const parts = entRaw.split(' ');
+          fEnt = parts[0];
+          hEnt = parts[1] || '15:00';
+        } else if (entRaw.includes(':')) {
+          hEnt = entRaw;
+          fEnt = fLimp;
+        } else if (entRaw.includes('-') || entRaw.includes('/')) {
+          fEnt = entRaw;
+        }
+      }
+      document.getElementById('riga-fecha-entrada').value = fEnt;
+      document.getElementById('riga-hora-entrada').value = hEnt;
+
+      const dLibres = parseInt(getCleanField(r, 'diasLibres')) || 0;
+      document.getElementById('riga-dias-libres').value = dLibres;
+      const txtEl = document.getElementById('riga-dias-libres-txt');
+      if (dLibres === 0) {
+        txtEl.innerText = "Mismo día (0 días libres)";
+        txtEl.style.color = "var(--text-muted)";
+      } else {
+        txtEl.innerText = dLibres + " días libres";
+        txtEl.style.color = "#ef4444";
+      }
+
       document.getElementById('riga-notas').value = getCleanField(r, 'notas') !== '-' ? getCleanField(r, 'notas') : '';
-      document.getElementById('riga-encargado').value = getCleanField(r, 'encargado') !== 'Da assegnare' ? getCleanField(r, 'encargado') : '';
+
+      // Preservar y seleccionar colaborador existente (Point 5)
+      const encVal = (getCleanField(r, 'encargado') || '').trim();
+      const selEnc = document.getElementById('riga-encargado');
+      let matched = false;
+      for (let opt of selEnc.options) {
+        if (opt.value && encVal && opt.value.trim().toUpperCase() === encVal.toUpperCase()) {
+          selEnc.value = opt.value;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched && encVal && encVal !== 'Sin asignar') {
+        const newOpt = document.createElement('option');
+        newOpt.value = encVal;
+        newOpt.text = encVal;
+        newOpt.selected = true;
+        selEnc.appendChild(newOpt);
+      }
+
       openModal('modal-riga');
     }
 
@@ -1704,19 +1840,35 @@
       e.preventDefault();
       const mes = document.getElementById('admin-filter-mes').value;
       const anno = document.getElementById('admin-filter-anno').value;
+
+      const fLimp = document.getElementById('riga-fecha').value;
+      const fEnt = document.getElementById('riga-fecha-entrada').value || fLimp;
+      const hEnt = document.getElementById('riga-hora-entrada').value || "15:00";
+      const diasLibres = parseInt(document.getElementById('riga-dias-libres').value) || 0;
+
+      const entradaFormatted = (fEnt === fLimp) ? hEnt : (fEnt + " (" + hEnt + ")");
+
       const rowData = {
         id: document.getElementById('riga-id').value,
         apartamento: document.getElementById('riga-apt').value,
-        fecha: document.getElementById('riga-fecha').value,
-        horario: document.getElementById('riga-horario').value,
+        fecha: fLimp,
+        horario: document.getElementById('riga-horario').value || "10:00",
         preparar: document.getElementById('riga-preparar').value,
-        entrada: document.getElementById('riga-entrada').value,
+        entrada: entradaFormatted,
+        diasLibres: diasLibres,
         notas: document.getElementById('riga-notas').value,
         encargado: document.getElementById('riga-encargado').value
       };
 
+      const btn = document.getElementById('btn-save-riga');
+      btn.disabled = true;
+      btn.innerText = "Guardando...";
+
       try {
         const res = await apiCall("saveRiga", { rowData: rowData, mes: mes, anno: anno });
+        btn.disabled = false;
+        btn.innerText = "Guardar Limpieza";
+
         if (res && res.success) {
           closeModal('modal-riga');
           toast("Limpieza guardada correctamente", "success");
@@ -1725,6 +1877,8 @@
           toast(res.error || "Error al guardar", "error");
         }
       } catch (err) {
+        btn.disabled = false;
+        btn.innerText = "Guardar Limpieza";
         toast("Error de red", "error");
       }
     }
@@ -1964,7 +2118,7 @@
     }
 
     // --- Contabilidad Admin Completa y Automática ---
-    async function loadAdminContabilita() {
+    async function loadAdminContabilita(isSilent = false) {
       const enc = document.getElementById('admin-cont-filter-enc').value;
       const apt = document.getElementById('admin-cont-filter-apt').value;
       const mes = document.getElementById('admin-cont-filter-mes').value;
@@ -1972,7 +2126,9 @@
       const est = document.getElementById('admin-cont-filter-est').value;
 
       const tbody = document.getElementById('tbody-admin-contabilita');
-      tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:30px; color:var(--text-muted);">Calculando contabilidad completa...</td></tr>';
+      if (!isSilent) {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:30px; color:var(--text-muted);">Calculando contabilidad completa...</td></tr>';
+      }
 
       try {
         const res = await apiCall("getContabilidad", { encargado: enc, apartamento: apt, mes: mes, anno: anno, estado: est });
@@ -1980,22 +2136,23 @@
           CURRENT_CONTABILIDAD_ROWS = res.rows || res.data || [];
           renderAdminContabilita(CURRENT_CONTABILIDAD_ROWS);
         } else {
-          tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Error") + '</td></tr>';
+          if (!isSilent) tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Error") + '</td></tr>';
         }
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:30px; color:var(--danger);">Error de red</td></tr>';
+        if (!isSilent) tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:30px; color:var(--danger);">Error de red</td></tr>';
       }
 
-      loadAdminGastos();
+      loadAdminGastos(isSilent);
     }
 
     function renderAdminContabilita(records) {
-      let tot = 0, pag = 0, att = 0, pul = 0, gas = 0;
+      let tot = 0, pag = 0, att = 0, pul = 0, gas = 0, gasPend = 0;
       records.forEach(c => {
         const t = parseFloat(c.total) || 0;
         tot += t;
         pul += parseInt(c.nLimpiezas) || 0;
         gas += parseFloat(c.gastos) || 0;
+        gasPend += parseFloat(c.gastosPendientes) || 0;
         if (c.estado === 'pagado' || c.stato === 'pagado') pag += t;
         else att += t;
       });
@@ -2005,6 +2162,9 @@
       document.getElementById('admin-cont-attesa').innerText = "€ " + att.toFixed(2);
       document.getElementById('admin-cont-pulizie').innerText = pul;
       document.getElementById('admin-cont-gastos').innerText = "€ " + gas.toFixed(2);
+      // Show pending gastos (awaiting approval) if element exists
+      const pendEl = document.getElementById('admin-cont-gastos-pend');
+      if (pendEl) pendEl.innerText = "€ " + gasPend.toFixed(2);
 
       const tbody = document.getElementById('tbody-admin-contabilita');
       if (!records || records.length === 0) {
@@ -2022,6 +2182,7 @@
         html += '<td>' + (c.nLimpiezas || 0) + '</td>';
         html += '<td>€ ' + (c.precioPorLimpieza || 0).toFixed(2) + '</td>';
         html += '<td>€ ' + (c.gastos || 0).toFixed(2) + '</td>';
+        html += '<td style="color:' + ((c.gastosPendientes || 0) > 0 ? '#e67e22' : 'var(--text-muted)') + '">€ ' + (c.gastosPendientes || 0).toFixed(2) + '</td>';
         html += '<td><strong style="font-size:0.95rem; color:var(--text);">€ ' + (c.total || 0).toFixed(2) + '</strong></td>';
         html += '<td>' + (isPag ? '<span class="badge badge-success">Pagado</span>' : '<span class="badge badge-warning">Pendiente</span>') + '</td>';
         html += '<td>' + (c.fechaPago || '-') + '</td>';
@@ -2064,55 +2225,69 @@
     }
 
     // --- Gastos (Admin) ---
-    async function loadAdminGastos() {
+    function populateGastoApartamentoSelect() {
+      const selApt = document.getElementById('gasto-apartamento');
+      if (!selApt) return;
+      selApt.innerHTML = '<option value="">Selecciona un apartamento...</option>';
+      (APP_CONFIG.apartamentos || []).forEach(apt => {
+        selApt.innerHTML += '<option value="' + apt + '">' + apt + '</option>';
+      });
+    }
+
+    async function loadAdminGastos(isSilent = false) {
       const tbody = document.getElementById('tbody-admin-gastos');
+      const mes = document.getElementById('admin-cont-filter-mes').value;
+      const anno = document.getElementById('admin-cont-filter-anno').value;
+      const enc = document.getElementById('admin-cont-filter-enc').value;
+      const apt = document.getElementById('admin-cont-filter-apt').value;
+
       try {
-        const res = await apiCall("getGastos");
-        if (res && res.success) {
-          CURRENT_GASTOS_ROWS = res.gastos || res.data || [];
-          renderAdminGastos(CURRENT_GASTOS_ROWS);
-        }
-      } catch(e) {}
+        const res = await apiCall("getGastos", { mes: mes, anno: anno, encargado: enc, apartamento: apt });
+        const gastos = (res && res.success) ? (res.gastos || res.data || []) : [];
+        renderAdminGastos(gastos);
+      } catch (e) {}
     }
 
     function renderAdminGastos(gastos) {
       const tbody = document.getElementById('tbody-admin-gastos');
       if (!gastos || gastos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">No hay gastos registrados</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">No hay gastos registrados para este filtro</td></tr>';
         return;
       }
+
       let html = '';
       gastos.forEach(g => {
-        const isAprobado = g.estado === 'aprobado';
-        const isRechazado = g.estado === 'rechazado';
-        let badge = '<span class="badge badge-warning">Pendiente</span>';
-        if (isAprobado) badge = '<span class="badge badge-success">Aprobado</span>';
-        if (isRechazado) badge = '<span class="badge badge-danger">Rechazado</span>';
+        let badge = '<span class="badge badge-warning">🟡 Pendiente</span>';
+        if (g.estado === 'aprobado') badge = '<span class="badge badge-success">🟢 Aprobado</span>';
+        if (g.estado === 'rechazado') badge = '<span class="badge badge-danger">🔴 Rechazado</span>';
 
         html += '<tr>';
         html += '<td>' + (g.fecha || '-') + '</td>';
         html += '<td><span class="badge badge-enc">' + (g.encargado || '-') + '</span></td>';
-        html += '<td>' + g.mes + '/' + g.anno + '</td>';
+        html += '<td><span class="badge badge-apt">' + (g.apartamento || '-') + '</span></td>';
+        html += '<td>' + (g.mes || '-') + '/' + (g.anno || '-') + '</td>';
         html += '<td><strong>' + (g.concepto || '-') + '</strong></td>';
-        html += '<td><strong>€ ' + (g.importe || 0).toFixed(2) + '</strong></td>';
+        html += '<td style="font-weight:700;">€ ' + (parseFloat(g.importe) || 0).toFixed(2) + '</td>';
         html += '<td>' + badge + '</td>';
         html += '<td style="text-align:right; white-space:nowrap;">';
-        if (!isAprobado) {
-          html += '<button class="btn btn-sm btn-success" onclick="cambiarEstadoGasto(\'' + g.id + '\', \'aprobado\')" style="margin-right:4px;">Aprobar</button>';
+        if (g.estado !== 'aprobado') {
+          html += '<button class="btn btn-sm btn-primary" onclick="cambiarEstadoGasto(\'' + g.id + '\', \'aprobado\')">Aprobar</button> ';
         }
-        if (!isRechazado) {
-          html += '<button class="btn btn-sm btn-danger" onclick="cambiarEstadoGasto(\'' + g.id + '\', \'rechazado\')" style="margin-right:4px;">Rechazar</button>';
+        if (g.estado !== 'rechazado') {
+          html += '<button class="btn btn-sm btn-outline" onclick="cambiarEstadoGasto(\'' + g.id + '\', \'rechazado\')">Rechazar</button> ';
         }
-        html += '<button class="btn btn-sm" onclick="eliminarGasto(\'' + g.id + '\')">🗑️</button>';
+        html += '<button class="btn btn-sm btn-danger" onclick="eliminarGasto(\'' + g.id + '\')">🗑️</button>';
         html += '</td>';
         html += '</tr>';
       });
+
       tbody.innerHTML = html;
     }
 
     function openModalAddGastoAdmin() {
       document.getElementById('modal-gasto-title').innerText = "Añadir Gasto (Administrador)";
       document.getElementById('gasto-admin-enc-group').style.display = 'block';
+      populateGastoApartamentoSelect();
       document.getElementById('gasto-concepto').value = "";
       document.getElementById('gasto-importe').value = "";
       document.getElementById('gasto-fecha').value = new Date().toISOString().split('T')[0];
@@ -2148,7 +2323,6 @@
       }
     }
 
-    // --- Exportar PDF / Imprimir ---
     function exportarContabilidadPDF() {
       const records = CURRENT_CONTABILIDAD_ROWS || [];
       if (records.length === 0) {
@@ -2285,48 +2459,64 @@
     }
 
     // --- Collaboratore View Logic ---
-    async function loadCollabCalendario() {
+    async function loadCollabCalendario(isSilent = false) {
       const mes = document.getElementById('collab-filter-mes').value;
       const anno = document.getElementById('collab-filter-anno').value;
       const tbody = document.getElementById('tbody-collab-calendario');
-      const thead = document.getElementById('thead-collab-calendario');
 
-      const p = SESSION.permisos || DEFAULT_PERMISOS;
-
-      // Generar cabecera según permisos
-      let thHtml = '<tr><th>Apartamento</th><th>Fecha Limpieza</th>';
-      if (p.verHorario !== false) thHtml += '<th>Horario</th>';
-      if (p.verPrepararPara !== false) thHtml += '<th>Preparar Para</th>';
-      if (p.verEntradaProximos !== false) thHtml += '<th>Próxima Entrada</th>';
-      if (p.verNotasAdmin !== false) thHtml += '<th>Notas Admin</th>';
-      thHtml += '<th>Mi Nota</th></tr>';
-      thead.innerHTML = thHtml;
-
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando tu calendario...</td></tr>';
+      if (!isSilent) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando tu calendario...</td></tr>';
+      }
 
       try {
         const res = await apiCall("getCalendario", { mes: mes, anno: anno });
         if (res && res.success) {
-          renderCollabCalendario(res.rows || res.data || []);
+          CURRENT_COLLAB_CAL_ROWS = res.rows || res.data || [];
+          renderCollabCalendario(CURRENT_COLLAB_CAL_ROWS);
         } else {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Error") + '</td></tr>';
+          if (!isSilent) tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Error") + '</td></tr>';
         }
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">Error de red</td></tr>';
+        if (!isSilent) tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--danger);">Error de conexión</td></tr>';
       }
     }
 
     function renderCollabCalendario(rows) {
+      const thead = document.getElementById('thead-collab-calendario');
       const tbody = document.getElementById('tbody-collab-calendario');
-      document.getElementById('collab-count-badge').innerText = rows.length + " Limpiezas";
+      const p = SESSION.permisos || {};
+
+      let totalDiasLibres = 0;
+      (rows || []).forEach(r => {
+        totalDiasLibres += parseInt(getCleanField(r, 'diasLibres')) || 0;
+      });
+
+      const badgeCount = document.getElementById('collab-count-badge');
+      if (badgeCount) badgeCount.innerText = rows.length + " Limpiezas";
+
+      const badgeDias = document.getElementById('collab-dias-libres-badge');
+      if (badgeDias) badgeDias.innerText = "📅 Total Días Libres: " + totalDiasLibres + " días";
+
+      // Thead dinámico según permisos
+      let thHtml = '<tr>';
+      thHtml += '<th>Apartamento</th>';
+      thHtml += '<th>Fecha Limpieza</th>';
+      if (p.verHorario !== false) thHtml += '<th>Horario</th>';
+      if (p.verPrepararPara !== false) thHtml += '<th>Preparar Para</th>';
+      if (p.verEntradaProximos !== false) thHtml += '<th>Próxima Entrada</th>';
+      if (p.verDiasLibres !== false) thHtml += '<th>Días Libres</th>';
+      if (p.verNotasAdmin !== false) thHtml += '<th>Notas Admin</th>';
+      thHtml += '<th>Mi Nota</th>';
+      thHtml += '<th style="text-align:right;">Acción</th>';
+      thHtml += '</tr>';
+      thead.innerHTML = thHtml;
 
       if (!rows || rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">No tienes limpiezas asignadas para este mes</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">No tienes limpiezas asignadas para este periodo</td></tr>';
         return;
       }
 
-      const p = SESSION.permisos || DEFAULT_PERMISOS;
-      let html = '';
+      let bHtml = '';
       rows.forEach(r => {
         const id = getCleanField(r, 'id');
         const apt = getCleanField(r, 'apartamento');
@@ -2334,22 +2524,34 @@
         const horario = getCleanField(r, 'horario');
         const preparar = getCleanField(r, 'preparar');
         const entrada = getCleanField(r, 'entrada');
+        const dLib = parseInt(getCleanField(r, 'diasLibres')) || 0;
         const notas = getCleanField(r, 'notas');
         const notaEnc = getCleanField(r, 'notaEncargado');
 
-        html += '<tr>';
-        html += '<td><span class="badge badge-apt">' + apt + '</span></td>';
-        html += '<td><strong>' + fecha + '</strong></td>';
-        if (p.verHorario !== false) html += '<td>' + horario + '</td>';
-        if (p.verPrepararPara !== false) html += '<td>' + preparar + '</td>';
-        if (p.verEntradaProximos !== false) html += '<td>' + entrada + '</td>';
-        if (p.verNotasAdmin !== false) html += '<td>' + notas + '</td>';
-        html += '<td>';
-        html += '<button class="btn btn-sm" onclick="openModalNotaEnc(\'' + id + '\', \'' + notaEnc.replace(/'/g, "\\'") + '\')">' + (notaEnc ? '💬 ' + notaEnc : '➕ Añadir nota') + '</button>';
-        html += '</td>';
-        html += '</tr>';
+        bHtml += '<tr>';
+        bHtml += '<td><span class="badge badge-apt">' + apt + '</span></td>';
+        bHtml += '<td><strong>' + fecha + '</strong></td>';
+        if (p.verHorario !== false) bHtml += '<td>' + (horario !== '-' ? horario : '10:00') + '</td>';
+        if (p.verPrepararPara !== false) bHtml += '<td>' + preparar + '</td>';
+        if (p.verEntradaProximos !== false) bHtml += '<td>' + entrada + '</td>';
+
+        if (p.verDiasLibres !== false) {
+          if (dLib > 0) {
+            bHtml += '<td><span class="badge" style="background:rgba(239,68,68,0.2); color:#f87171; border:1px solid #ef4444; font-weight:700;">' + dLib + ' días</span></td>';
+          } else {
+            bHtml += '<td><span style="color:var(--text-muted); font-size:0.85rem;">0</span></td>';
+          }
+        }
+
+        if (p.verNotasAdmin !== false) bHtml += '<td><span style="font-size:0.8rem; color:var(--text-muted);">' + notas + '</span></td>';
+        bHtml += '<td>' + (notaEnc ? ('<span style="color:var(--primary); font-size:0.82rem;">💬 ' + notaEnc + '</span>') : '<span style="color:var(--text-muted); font-size:0.8rem;">Sin nota</span>') + '</td>';
+        bHtml += '<td style="text-align:right;">';
+        bHtml += '<button class="btn btn-sm btn-outline" onclick="openModalNotaEnc(\'' + id + '\', \'' + encodeURIComponent(notaEnc) + '\')">✏️ Nota</button>';
+        bHtml += '</td>';
+        bHtml += '</tr>';
       });
-      tbody.innerHTML = html;
+
+      tbody.innerHTML = bHtml;
     }
 
     function openModalNotaEnc(id, currentNota) {
@@ -2380,7 +2582,7 @@
     }
 
     // --- Colaborador Compensi e Gastos ---
-    async function loadCollabCompensi() {
+    async function loadCollabCompensi(isSilent = false) {
       const mes = document.getElementById('collab-filter-mes').value;
       const anno = document.getElementById('collab-filter-anno').value;
 
@@ -2391,11 +2593,13 @@
         let pulCount = 0;
         let tarifa = SESSION.precioLimpieza || 40;
         let gastosAprobados = 0;
+        let gastosPendientes = 0;
         let isPagado = false;
 
         records.forEach(r => {
           pulCount += parseInt(r.nLimpiezas) || 0;
           gastosAprobados += parseFloat(r.gastos) || 0;
+          gastosPendientes += parseFloat(r.gastosPendientes) || 0;
           if (r.estado === 'pagado' || r.stato === 'pagado') isPagado = true;
         });
 
@@ -2406,6 +2610,9 @@
         document.getElementById('collab-stat-totale').innerText = "€ " + totalLimp.toFixed(2);
         document.getElementById('collab-stat-gastos').innerText = "€ " + gastosAprobados.toFixed(2);
         document.getElementById('collab-stat-liquidazione').innerText = "€ " + totalLiquidacion.toFixed(2);
+        // Show pending gastos awaiting admin approval
+        const pendEl = document.getElementById('collab-stat-gastos-pend');
+        if (pendEl) pendEl.innerText = "€ " + gastosPendientes.toFixed(2);
 
         const estBadge = document.getElementById('collab-stat-estado');
         if (isPagado) {
@@ -2414,7 +2621,7 @@
           estBadge.innerHTML = '<span class="badge badge-warning">🟡 Pendiente</span>';
         }
 
-        // Control de bloqueo de gastos si el mes está pagado
+        // Control de bloqueo de gastos si el mes está pagado o no es el mes en curso
         const btnAddGasto = document.getElementById('btn-collab-add-gasto');
         const cerradoMsg = document.getElementById('collab-mes-cerrado-msg');
 
@@ -2454,30 +2661,35 @@
         const gastos = (res && res.success) ? (res.gastos || res.data || []) : [];
 
         if (gastos.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">No has añadido gastos para este mes</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">No hay gastos registrados para este mes</td></tr>';
           return;
         }
 
         let html = '';
         gastos.forEach(g => {
-          let badge = '<span class="badge badge-warning">Pendiente</span>';
-          if (g.estado === 'aprobado') badge = '<span class="badge badge-success">Aprobado</span>';
-          if (g.estado === 'rechazado') badge = '<span class="badge badge-danger">Rechazado</span>';
+          let badge = '<span class="badge badge-warning">🟡 Pendiente</span>';
+          if (g.estado === 'aprobado') badge = '<span class="badge badge-success">🟢 Aprobado</span>';
+          if (g.estado === 'rechazado') badge = '<span class="badge badge-danger">🔴 Rechazado</span>';
 
           html += '<tr>';
           html += '<td>' + (g.fecha || '-') + '</td>';
+          html += '<td><span class="badge badge-apt">' + (g.apartamento || '-') + '</span></td>';
           html += '<td><strong>' + (g.concepto || '-') + '</strong></td>';
-          html += '<td>€ ' + (g.importe || 0).toFixed(2) + '</td>';
+          html += '<td><strong>€ ' + (parseFloat(g.importe) || 0).toFixed(2) + '</strong></td>';
           html += '<td>' + badge + '</td>';
           html += '</tr>';
         });
+
         tbody.innerHTML = html;
-      } catch(e) {}
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--danger);">Error al cargar gastos</td></tr>';
+      }
     }
 
     function openModalAddGastoCollab() {
       document.getElementById('modal-gasto-title').innerText = "Añadir Gasto de este Mes";
       document.getElementById('gasto-admin-enc-group').style.display = 'none';
+      populateGastoApartamentoSelect();
       document.getElementById('gasto-concepto').value = "";
       document.getElementById('gasto-importe').value = "";
       document.getElementById('gasto-fecha').value = new Date().toISOString().split('T')[0];
@@ -2486,38 +2698,48 @@
 
     async function handleSaveGastoSubmit(e) {
       e.preventDefault();
-      const mes = document.getElementById(SESSION.role==='admin' ? 'admin-cont-filter-mes' : 'collab-filter-mes').value || (new Date().getMonth()+1);
-      const anno = document.getElementById(SESSION.role==='admin' ? 'admin-cont-filter-anno' : 'collab-filter-anno').value || new Date().getFullYear();
+      const mes = SESSION.role === 'admin' ? (document.getElementById('admin-cont-filter-mes').value || (new Date().getMonth()+1)) : (new Date().getMonth()+1);
+      const anno = SESSION.role === 'admin' ? (document.getElementById('admin-cont-filter-anno').value || new Date().getFullYear()) : new Date().getFullYear();
       const concepto = document.getElementById('gasto-concepto').value.trim();
       const importe = parseFloat(document.getElementById('gasto-importe').value) || 0;
       const fecha = document.getElementById('gasto-fecha').value;
       const encargado = SESSION.role === 'admin' ? document.getElementById('gasto-encargado').value : SESSION.encargadoKey;
+      const apartamento = document.getElementById('gasto-apartamento').value;
+
+      if (!apartamento) {
+        toast("Debes seleccionar a qué apartamento corresponde el gasto", "error");
+        return;
+      }
 
       try {
         const res = await apiCall("saveGasto", {
           gastoData: {
             mes: mes,
             anno: anno,
+            apartamento: apartamento,
             concepto: concepto,
             importe: importe,
             fecha: fecha,
             encargado: encargado
           }
         });
+
         if (res && res.success) {
           closeModal('modal-add-gasto');
-          toast("Gasto añadido con éxito", "success");
-          if (SESSION.role === 'admin') loadAdminContabilita();
-          else loadCollabCompensi();
+          toast("Gasto registrado correctamente", "success");
+          if (SESSION.role === 'admin') {
+            loadAdminContabilita();
+          } else {
+            loadCollabCompensi();
+          }
         } else {
-          toast(res.error || "Error al añadir gasto", "error");
+          toast(res.error || "Error al registrar gasto", "error");
         }
-      } catch(err) {
+      } catch (err) {
         toast("Error de red", "error");
       }
     }
 
-    // --- Colaborador Actualizar Correo ---
     async function handleCollabEmailUpdate(e) {
       e.preventDefault();
       const newEmail = document.getElementById('collab-new-email').value.trim();
@@ -2534,6 +2756,31 @@
         toast("Error de red", "error");
       }
     }
-  </script>
+  
+    // --- Auto-refresco en segundo plano cada 10 segundos (Point 7) ---
+    async function backgroundAutoRefresh() {
+      if (document.hidden) return;
+      if (document.querySelector('.modal-overlay.active')) return;
+      if (!SESSION.token) return;
+
+      if (SESSION.role === 'admin') {
+        const calEl = document.getElementById('admin-tab-calendario');
+        const contEl = document.getElementById('admin-tab-contabilita');
+        if (calEl && calEl.style.display !== 'none') loadAdminCalendario(true);
+        else if (contEl && contEl.style.display !== 'none') loadAdminContabilita(true);
+      } else {
+        const calEl = document.getElementById('collab-tab-calendario');
+        const compEl = document.getElementById('collab-tab-compensi');
+        if (calEl && calEl.style.display !== 'none') {
+          loadCollabCalendario(true);
+          checkCollabNotificaciones();
+        } else if (compEl && compEl.style.display !== 'none') {
+          loadCollabCompensi(true);
+          checkCollabNotificaciones();
+        }
+      }
+    }
+    setInterval(backgroundAutoRefresh, 10000);
+</script>
 </body>
 </html>
