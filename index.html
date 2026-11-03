@@ -984,8 +984,8 @@
         <div class="modal-title" style="color:var(--primary);">🔔 Novedades en tu Calendario</div>
         <button class="modal-close" onclick="closeModalNotificaciones()">✕</button>
       </div>
-      <p style="color:var(--text-muted); font-size:0.86rem; margin-bottom:16px;">
-        El administrador ha realizado cambios o añadido notas en tus limpiezas:
+      <p id="notif-modal-sub" style="color:var(--text-muted); font-size:0.86rem; margin-bottom:16px;">
+        Avisos y actividad reciente:
       </p>
       <div id="notif-list-container" style="max-height:300px; overflow-y:auto; margin-bottom:20px;">
         <!-- Se llena con notificaciones -->
@@ -1253,7 +1253,7 @@
       precioLimpieza: parseFloat(localStorage.getItem("CP_PRECIO") || 40)
     };
 
-    let APP_CONFIG = { apartamentos: [], encargados: [] };
+    let APP_CONFIG = { apartamentos: ["Juan Llorens", "Palleter"], encargados: [] };
     let CURRENT_CALENDARIO_ROWS = [];
     let CURRENT_CONTABILIDAD_ROWS = [];
     let CURRENT_GASTOS_ROWS = [];
@@ -1563,9 +1563,11 @@
     async function initAdminView() {
       await loadAppConfig();
       loadAdminCalendario();
+      checkAdminNotificaciones();
     }
 
     async function initCollabView() {
+      await loadAppConfig();
       document.getElementById('collab-info-nombre').innerText = SESSION.nombre;
       document.getElementById('collab-info-enc').innerText = SESSION.encargadoKey || "No asignado";
       document.getElementById('collab-info-tarifa').innerText = "€ " + (SESSION.precioLimpieza || 40).toFixed(2);
@@ -1579,6 +1581,35 @@
 
       loadCollabCalendario();
       checkCollabNotificaciones();
+    }
+
+    async 
+    async function checkAdminNotificaciones() {
+      if (SESSION.role !== 'admin') return;
+      try {
+        const res = await apiCall("getNotificaciones");
+        if (res && res.success && Array.isArray(res.notificaciones) && res.notificaciones.length > 0) {
+          UNREAD_NOTIF_IDS = res.notificaciones.map(n => n.id);
+          const container = document.getElementById('notif-list-container');
+          const title = document.getElementById('notif-modal-title');
+          const sub = document.getElementById('notif-modal-sub');
+          if (title) title.innerText = "🔔 Notificaciones del Administrador";
+          if (sub) sub.innerText = "Actividad reciente de los colaboradores (nuevos gastos, notas):";
+
+          let html = '';
+          res.notificaciones.forEach(n => {
+            html += '<div class="notif-item">';
+            html += '<div class="notif-msg">📢 ' + n.mensaje + '</div>';
+            if (n.fechaLimpieza) html += '<div style="font-size:0.75rem; color:var(--primary); margin-top:2px;">Fecha asociada: ' + n.fechaLimpieza + '</div>';
+            html += '<div class="notif-time">' + (n.creado || '') + '</div>';
+            html += '</div>';
+          });
+          if (container) container.innerHTML = html;
+          openModal('modal-notificaciones');
+        }
+      } catch(e) {
+        console.warn("Error comprobando notificaciones admin:", e);
+      }
     }
 
     async function checkCollabNotificaciones() {
@@ -1614,16 +1645,31 @@
       try {
         const res = await apiCall("getAppConfig");
         if (res && res.success) {
+          let apts = Array.isArray(res.apartamentos) ? res.apartamentos : [];
+          // Purge old dummy apartments (N1..N10, Varios)
+          const hadDummy = apts.some(a => /^N\d+$/i.test(a) || a.toLowerCase() === 'varios');
+          apts = apts.filter(a => !/^N\d+$/i.test(a) && a.toLowerCase() !== 'varios');
+          if (!apts.includes("Juan Llorens")) apts.unshift("Juan Llorens");
+          if (!apts.includes("Palleter")) apts.push("Palleter");
+          res.apartamentos = apts;
           APP_CONFIG = res;
           populateConfigDropdowns();
+          // If dummy apartments were purged, persist clean list to backend
+          if (hadDummy && SESSION.role === 'admin') {
+            apiCall("saveAppConfig", { apartamentos: apts }).catch(() => {});
+          }
         }
       } catch (e) {
         console.warn("Error cargando config:", e);
+        if (!APP_CONFIG.apartamentos || APP_CONFIG.apartamentos.length === 0) {
+          APP_CONFIG.apartamentos = ["Juan Llorens", "Palleter"];
+        }
+        populateConfigDropdowns();
       }
     }
 
     function populateConfigDropdowns() {
-      const aptSelects = ['admin-filter-apt', 'admin-cont-filter-apt', 'riga-apt'];
+      const aptSelects = ['admin-filter-apt', 'admin-cont-filter-apt', 'riga-apt', 'gasto-apartamento'];
       aptSelects.forEach(id => {
         const sel = document.getElementById(id);
         if (!sel) return;
@@ -1947,12 +1993,16 @@
         html += '<td>' + (isBlocked ? '<span class="badge badge-danger">Bloqueado</span>' : '<span class="badge badge-success">Activo</span>') + '</td>';
         html += '<td style="color:var(--text-muted); font-size:0.8rem;">' + (u.ultimoAcceso || '-') + '</td>';
         html += '<td style="text-align:right; white-space:nowrap;">';
-        if (u.role !== 'admin') {
+        const isMainAdmin = (u.email || '').toLowerCase() === 'alcamaservice@gmail.com';
+        if (isMainAdmin) {
+          html += '<span class="badge badge-apt">Admin Principal</span>';
+        } else if (u.role === 'admin') {
+          html += '<span class="badge badge-warning" style="margin-right:8px;">Admin Duplicado</span>';
+          html += '<button class="btn btn-sm btn-danger" onclick="eliminaUser(\'' + u.email + '\')" title="Eliminar este administrador duplicado">🗑️ Eliminar</button>';
+        } else {
           html += '<button class="btn btn-sm btn-secondary" onclick="openFichaColaborador(\'' + u.email + '\')" style="margin-right:6px;" title="Ver Ficha y Permisos">⚙️ Ficha</button>';
           html += '<button class="btn btn-sm ' + (isBlocked ? 'btn-success' : 'btn-danger') + '" onclick="toggleBloccaUser(\'' + u.email + '\')" style="margin-right:6px;">' + (isBlocked ? 'Desbloquear' : 'Bloquear') + '</button>';
-          html += '<button class="btn btn-sm btn-danger" onclick="eliminaUser(\'' + u.email + '\')" title="Eliminar">🗑️</button>';
-        } else {
-          html += '<span class="badge badge-apt">Administrador</span>';
+          html += '<button class="btn btn-sm btn-danger" onclick="eliminaUser(\'' + u.email + '\')" title="Eliminar colaborador">🗑️</button>';
         }
         html += '</td>';
         html += '</tr>';
@@ -2114,32 +2164,67 @@
     }
 
     async function eliminaUser(email) {
-      if (!confirm("¿Seguro que deseas eliminar este colaborador permanentemente?\n\nEsta acción no se puede deshacer.")) return;
+      if (!email) return;
+      if (email.toLowerCase() === 'alcamaservice@gmail.com') {
+        toast("No se puede eliminar el administrador principal", "error");
+        return;
+      }
+      if (!confirm("¿Seguro que deseas eliminar esta cuenta (" + email + ") permanentemente?\n\nEsta acción no se puede deshacer.")) return;
       try {
-        const res = await apiCall("eliminarUsuarioPermanente", { id: email });
+        // Try eliminarUsuario first (supported on all backend versions)
+        let res = await apiCall("eliminarUsuario", { id: email });
+        if (!res || !res.success) {
+          // Fallback to eliminarUsuarioPermanente
+          res = await apiCall("eliminarUsuarioPermanente", { id: email });
+        }
         if (res && res.success) {
-          toast("Colaborador eliminado correctamente", "success");
+          toast("Usuario eliminado permanentemente", "success");
+          CURRENT_USERS_LIST = CURRENT_USERS_LIST.filter(u => (u.email || '').toLowerCase() !== email.toLowerCase());
+          renderAdminUtentiTable(CURRENT_USERS_LIST);
           loadAdminUtenti();
         } else {
-          toast(res.error || "Error al eliminar", "error");
+          toast(res.error || "Error al eliminar usuario", "error");
         }
       } catch (err) {
-        toast("Error de red al eliminar", "error");
+        toast("Error de conexión al eliminar", "error");
       }
     }
 
     async function limpiarAdminsDuplicados() {
-      if (!confirm("¿Eliminar todos los administradores duplicados y cuentas @pulizie.app?\n\nSe conservará solo: alcamaservice@gmail.com")) return;
+      if (!confirm("¿Eliminar todos los administradores duplicados y cuentas @pulizie.app?\n\nSe conservará únicamente: alcamaservice@gmail.com")) return;
       try {
+        // Try backend action first
         const res = await apiCall("limpiarAdminsDuplicados");
         if (res && res.success) {
-          toast("Limpieza completada: " + (res.deleted || []).join(", "), "success");
-          loadAdminUtenti();
-        } else {
-          toast(res.error || "Error", "error");
+          toast("Limpieza completada. Cuentas eliminadas: " + (res.deleted || []).join(", "), "success");
+          await loadAdminUtenti();
+          return;
         }
+      } catch (e) {}
+
+      // Fallback: Delete one-by-one from frontend (works on all backend versions)
+      try {
+        const targets = CURRENT_USERS_LIST.filter(u => {
+          const em = (u.email || '').toLowerCase();
+          const role = (u.role || '').toLowerCase();
+          return em !== 'alcamaservice@gmail.com' && (em.endsWith('@pulizie.app') || role === 'admin');
+        });
+
+        if (targets.length === 0) {
+          toast("No hay administradores duplicados ni cuentas @pulizie.app para eliminar", "info");
+          return;
+        }
+
+        let deletedCount = 0;
+        for (const t of targets) {
+          const r = await apiCall("eliminarUsuario", { id: t.email });
+          if (r && r.success) deletedCount++;
+        }
+
+        toast("Se han eliminado " + deletedCount + " cuentas duplicadas", "success");
+        await loadAdminUtenti();
       } catch (err) {
-        toast("Error de red", "error");
+        toast("Error durante la limpieza", "error");
       }
     }
 
@@ -2254,10 +2339,18 @@
     function populateGastoApartamentoSelect() {
       const selApt = document.getElementById('gasto-apartamento');
       if (!selApt) return;
+      const currentVal = selApt.value;
       selApt.innerHTML = '<option value="">Selecciona un apartamento...</option>';
-      (APP_CONFIG.apartamentos || []).forEach(apt => {
+      let list = (APP_CONFIG && APP_CONFIG.apartamentos && APP_CONFIG.apartamentos.length > 0)
+        ? APP_CONFIG.apartamentos
+        : ["Juan Llorens", "Palleter"];
+      // Exclude dummy N1..N10
+      list = list.filter(a => !/^N\d+$/i.test(a) && a.toLowerCase() !== 'varios');
+      if (list.length === 0) list = ["Juan Llorens", "Palleter"];
+      list.forEach(apt => {
         selApt.innerHTML += '<option value="' + apt + '">' + apt + '</option>';
       });
+      if (currentVal && list.includes(currentVal)) selApt.value = currentVal;
     }
 
     async function loadAdminGastos(isSilent = false) {
@@ -2448,9 +2541,18 @@
 
     async function loadApartamentosConfig() {
       try {
-        const res = await apiCall("getApartamentos");
-        const list = (res && res.success) ? (res.apartamentos || []) : [];
+        let list = (APP_CONFIG.apartamentos || []).filter(a => !/^N\d+$/i.test(a) && a.toLowerCase() !== 'varios');
+        if (list.length === 0) list = ["Juan Llorens", "Palleter"];
         renderApartamentosList(list);
+        const res = await apiCall("getApartamentos");
+        if (res && res.success && Array.isArray(res.apartamentos) && res.apartamentos.length > 0) {
+          let cleanList = res.apartamentos.filter(a => !/^N\d+$/i.test(a) && a.toLowerCase() !== 'varios');
+          if (cleanList.length > 0) {
+            APP_CONFIG.apartamentos = cleanList;
+            populateConfigDropdowns();
+            renderApartamentosList(cleanList);
+          }
+        }
       } catch (e) {
         console.warn("Error loading apartamentos:", e);
       }
@@ -2482,42 +2584,61 @@
       const nombre = (input ? input.value.trim() : '');
       if (!nombre) { toast("Escribe el nombre del apartamento", "error"); return; }
       try {
-        const res = await apiCall("getApartamentos");
-        const list = (res && res.success) ? (res.apartamentos || []) : [];
+        let list = (APP_CONFIG.apartamentos || []).slice();
+        if (list.length === 0) list = ["Juan Llorens", "Palleter"];
         if (list.includes(nombre)) { toast("El apartamento ya existe", "error"); return; }
         list.push(nombre);
-        const saveRes = await apiCall("saveApartamentos", { lista: list });
+
+        // Save via saveAppConfig (universally supported) AND saveApartamentos
+        let saveRes = await apiCall("saveAppConfig", { apartamentos: list });
+        if (!saveRes || !saveRes.success) {
+          saveRes = await apiCall("saveApartamentos", { lista: list, apartamentos: list });
+        }
+
         if (saveRes && saveRes.success) {
-          toast("Apartamento añadido correctamente", "success");
+          toast("Apartamento '" + nombre + "' añadido correctamente", "success");
           if (input) input.value = '';
-          document.getElementById('apt-add-form').style.display = 'none';
+          const form = document.getElementById('apt-add-form');
+          if (form) form.style.display = 'none';
+          APP_CONFIG.apartamentos = list;
+          populateConfigDropdowns();
+          renderApartamentosList(list);
           await loadAppConfig();
-          loadApartamentosConfig();
         } else {
-          toast(saveRes.error || "Error al guardar", "error");
+          toast(saveRes.error || "Error al guardar apartamento", "error");
         }
       } catch (e) {
-        toast("Error de red", "error");
+        toast("Error de conexión", "error");
       }
     }
 
     async function deleteApartamento(idx) {
       if (!confirm("¿Eliminar este apartamento de la lista?")) return;
       try {
-        const res = await apiCall("getApartamentos");
-        const list = (res && res.success) ? (res.apartamentos || []) : [];
+        let list = (APP_CONFIG.apartamentos || []).slice();
         const nombre = list[idx];
         list.splice(idx, 1);
-        const saveRes = await apiCall("saveApartamentos", { lista: list });
+        if (list.length === 0) {
+          toast("Debe haber al menos un apartamento", "error");
+          return;
+        }
+
+        let saveRes = await apiCall("saveAppConfig", { apartamentos: list });
+        if (!saveRes || !saveRes.success) {
+          saveRes = await apiCall("saveApartamentos", { lista: list, apartamentos: list });
+        }
+
         if (saveRes && saveRes.success) {
           toast("Apartamento '" + nombre + "' eliminado", "success");
+          APP_CONFIG.apartamentos = list;
+          populateConfigDropdowns();
+          renderApartamentosList(list);
           await loadAppConfig();
-          loadApartamentosConfig();
         } else {
-          toast(saveRes.error || "Error", "error");
+          toast(saveRes.error || "Error al eliminar", "error");
         }
       } catch (e) {
-        toast("Error de red", "error");
+        toast("Error de conexión", "error");
       }
     }
 
@@ -2780,18 +2901,38 @@
           if (g.estado === 'aprobado') badge = '<span class="badge badge-success">🟢 Aprobado</span>';
           if (g.estado === 'rechazado') badge = '<span class="badge badge-danger">🔴 Rechazado</span>';
 
+          const canDelete = (g.estado === 'pendiente');
+
           html += '<tr>';
           html += '<td>' + (g.fecha || '-') + '</td>';
           html += '<td><span class="badge badge-apt">' + (g.apartamento || '-') + '</span></td>';
           html += '<td><strong>' + (g.concepto || '-') + '</strong></td>';
           html += '<td><strong>€ ' + (parseFloat(g.importe) || 0).toFixed(2) + '</strong></td>';
-          html += '<td>' + badge + '</td>';
+          html += '<td>' + badge + (canDelete ? ' <button class="btn btn-sm btn-danger" onclick="eliminaGastoCollab(\'' + g.id + '\')" title="Eliminar este gasto pendiente" style="margin-left:8px; padding:3px 7px;">🗑️</button>' : '') + '</td>';
           html += '</tr>';
         });
 
         tbody.innerHTML = html;
       } catch (e) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--danger);">Error al cargar gastos</td></tr>';
+      }
+    }
+
+    
+    async function eliminaGastoCollab(gastoId) {
+      if (!confirm("¿Seguro que deseas eliminar este gasto? Se notificará al administrador.")) return;
+      try {
+        const res = await apiCall("deleteGasto", { gastoId: gastoId });
+        if (res && res.success) {
+          toast("Gasto eliminado correctamente", "info");
+          const mes = document.getElementById('collab-filter-mes').value;
+          const anno = document.getElementById('collab-filter-anno').value;
+          loadCollabCompensi();
+        } else {
+          toast(res.error || "Error al eliminar gasto", "error");
+        }
+      } catch (err) {
+        toast("Error de conexión", "error");
       }
     }
 
@@ -2877,6 +3018,7 @@
         const contEl = document.getElementById('admin-tab-contabilita');
         if (calEl && calEl.style.display !== 'none') loadAdminCalendario(true);
         else if (contEl && contEl.style.display !== 'none') loadAdminContabilita(true);
+        checkAdminNotificaciones();
       } else {
         const calEl = document.getElementById('collab-tab-calendario');
         const compEl = document.getElementById('collab-tab-compensi');
