@@ -533,7 +533,10 @@
       <div id="admin-tab-collaboratori" class="admin-subview" style="display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
           <h3 style="font-size:1.1rem; font-weight:700;">Gestione Account Collaboratori</h3>
-          <button class="btn btn-primary" onclick="openModalAddUser()">➕ Nuovo Collaboratore</button>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-secondary" onclick="sincronizzaCollaboratoriEsistenti()">🔄 Sincronizza Esistenti</button>
+            <button class="btn btn-primary" onclick="openModalAddUser()">➕ Nuovo Collaboratore</button>
+          </div>
         </div>
 
         <div class="card">
@@ -1287,11 +1290,13 @@
     }
 
     // --- Tab Navigation ---
-    function switchAdminTab(tabName) {
+    function switchAdminTab(tabName, btnEl) {
       document.querySelectorAll('#view-admin .tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.admin-subview').forEach(s => s.style.display = 'none');
-      event.currentTarget.classList.add('active');
-      document.getElementById('admin-tab-' + tabName).style.display = 'block';
+      const targetBtn = btnEl || (typeof event !== 'undefined' && event && event.currentTarget ? event.currentTarget : null);
+      if (targetBtn) targetBtn.classList.add('active');
+      const sub = document.getElementById('admin-tab-' + tabName);
+      if (sub) sub.style.display = 'block';
 
       if (tabName === 'calendario') loadAdminCalendario();
       if (tabName === 'collaboratori') loadAdminUtenti();
@@ -1299,11 +1304,13 @@
       if (tabName === 'configurazione') loadAdminConfig();
     }
 
-    function switchCollabTab(tabName) {
+    function switchCollabTab(tabName, btnEl) {
       document.querySelectorAll('#view-collaborator .tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.collab-subview').forEach(s => s.style.display = 'none');
-      event.currentTarget.classList.add('active');
-      document.getElementById('collab-tab-' + tabName).style.display = 'block';
+      const targetBtn = btnEl || (typeof event !== 'undefined' && event && event.currentTarget ? event.currentTarget : null);
+      if (targetBtn) targetBtn.classList.add('active');
+      const sub = document.getElementById('collab-tab-' + tabName);
+      if (sub) sub.style.display = 'block';
 
       if (tabName === 'calendario') loadCollabCalendario();
       if (tabName === 'compensi') loadCollabCompensi();
@@ -1354,7 +1361,8 @@
         const currentVal = sel.value;
         sel.innerHTML = id.includes('filter') ? '<option value="">Tutti</option>' : '<option value="">Seleziona...</option>';
         (APP_CONFIG.encargados || []).forEach(enc => {
-          sel.innerHTML += '<option value="' + enc + '">' + enc + '</option>';
+          const name = typeof enc === 'object' ? (enc.nombre || '') : enc;
+          if (name) sel.innerHTML += '<option value="' + name + '">' + name + '</option>';
         });
         if (currentVal) sel.value = currentVal;
       });
@@ -1373,13 +1381,30 @@
       try {
         const res = await apiCall("getCalendario", { mes: mes, anno: anno, userFilter: enc, aptFilter: apt });
         if (res && res.success) {
-          CURRENT_CALENDARIO_ROWS = res.rows || [];
+          CURRENT_CALENDARIO_ROWS = res.rows || res.data || [];
           renderAdminCalendarioTable(CURRENT_CALENDARIO_ROWS);
         } else {
           tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Errore") + '</td></tr>';
         }
       } catch (err) {
         tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--danger);">Errore di connessione</td></tr>';
+      }
+    }
+
+
+    function getCleanField(r, field) {
+      if (!r) return '';
+      switch (field) {
+        case 'id': return (r.id !== undefined && r.id !== '') ? r.id : (r.ID !== undefined ? r.ID : '');
+        case 'apartamento': return r.apartamento || r['APARTAMENTO'] || r['Apartamento'] || '-';
+        case 'fecha': return r.fecha || r['FECHA LIMPIEZA'] || r['FECHA'] || r['Fecha'] || '-';
+        case 'horario': return r.horario || r['HORARIO'] || r['Horario'] || '-';
+        case 'preparar': return r.preparar || r['PREPARAR PARA'] || r['Preparar'] || '-';
+        case 'entrada': return r.entrada || r['ENTRADA PROXIMOS'] || r['Entrada'] || '-';
+        case 'notas': return r.notas || r['NOTAS ADMIN'] || r['Notas'] || '-';
+        case 'encargado': return r.encargado || r['ENCARGADO/A'] || r['ENCARGADO'] || r['Encargado'] || 'Da assegnare';
+        case 'notaEncargado': return r.notaEncargado || r['NOTA ENCARGADO'] || r['Nota Encargado'] || '';
+        default: return r[field] || '';
       }
     }
 
@@ -1392,18 +1417,28 @@
 
       let html = '';
       rows.forEach(r => {
+        const id = getCleanField(r, 'id');
+        const apt = getCleanField(r, 'apartamento');
+        const fecha = getCleanField(r, 'fecha');
+        const horario = getCleanField(r, 'horario');
+        const preparar = getCleanField(r, 'preparar');
+        const entrada = getCleanField(r, 'entrada');
+        const notas = getCleanField(r, 'notas');
+        const encargado = getCleanField(r, 'encargado');
+        const notaEnc = getCleanField(r, 'notaEncargado');
+
         html += '<tr>';
-        html += '<td><span class="badge badge-apt">' + (r.apartamento || '-') + '</span></td>';
-        html += '<td><strong>' + (r.fecha || '-') + '</strong></td>';
-        html += '<td>' + (r.horario || '-') + '</td>';
-        html += '<td>' + (r.preparar || '-') + '</td>';
-        html += '<td>' + (r.entrada || '-') + '</td>';
-        html += '<td>' + (r.notas || '-') + '</td>';
-        html += '<td><span class="badge badge-enc">' + (r.encargado || 'Da assegnare') + '</span></td>';
-        html += '<td>' + (r.notaEncargado ? '<span style="color:var(--primary); font-size:0.8rem;">💬 ' + r.notaEncargado + '</span>' : '<span style="color:var(--text-muted);">-</span>') + '</td>';
+        html += '<td><span class="badge badge-apt">' + apt + '</span></td>';
+        html += '<td><strong>' + fecha + '</strong></td>';
+        html += '<td>' + horario + '</td>';
+        html += '<td>' + preparar + '</td>';
+        html += '<td>' + entrada + '</td>';
+        html += '<td>' + notas + '</td>';
+        html += '<td><span class="badge badge-enc">' + encargado + '</span></td>';
+        html += '<td>' + (notaEnc ? '<span style="color:var(--primary); font-size:0.8rem;">💬 ' + notaEnc + '</span>' : '<span style="color:var(--text-muted);">-</span>') + '</td>';
         html += '<td style="text-align:right; white-space:nowrap;">';
-        html += '<button class="btn btn-sm" onclick="openModalEditRiga(\'' + r.id + '\')" style="margin-right:6px;">✏️</button>';
-        html += '<button class="btn btn-sm btn-danger" onclick="eliminaRiga(\'' + r.id + '\')">🗑️</button>';
+        html += '<button class="btn btn-sm" onclick="openModalEditRiga(\'' + id + '\')" style="margin-right:6px;">✏️</button>';
+        html += '<button class="btn btn-sm btn-danger" onclick="eliminaRiga(\'' + id + '\')">🗑️</button>';
         html += '</td>';
         html += '</tr>';
       });
@@ -1422,17 +1457,17 @@
     }
 
     function openModalEditRiga(id) {
-      const r = CURRENT_CALENDARIO_ROWS.find(item => item.id == id);
+      const r = CURRENT_CALENDARIO_ROWS.find(item => getCleanField(item, 'id') == id);
       if (!r) return;
       document.getElementById('modal-riga-title').innerText = "Modifica Pulizia";
-      document.getElementById('riga-id').value = r.id;
-      document.getElementById('riga-apt').value = r.apartamento || "";
-      document.getElementById('riga-fecha').value = r.fecha || "";
-      document.getElementById('riga-horario').value = r.horario || "";
-      document.getElementById('riga-preparar').value = r.preparar || "";
-      document.getElementById('riga-entrada').value = r.entrada || "";
-      document.getElementById('riga-notas').value = r.notas || "";
-      document.getElementById('riga-encargado').value = r.encargado || "";
+      document.getElementById('riga-id').value = getCleanField(r, 'id');
+      document.getElementById('riga-apt').value = getCleanField(r, 'apartamento') !== '-' ? getCleanField(r, 'apartamento') : '';
+      document.getElementById('riga-fecha').value = getCleanField(r, 'fecha') !== '-' ? getCleanField(r, 'fecha') : '';
+      document.getElementById('riga-horario').value = getCleanField(r, 'horario') !== '-' ? getCleanField(r, 'horario') : '';
+      document.getElementById('riga-preparar').value = getCleanField(r, 'preparar') !== '-' ? getCleanField(r, 'preparar') : '';
+      document.getElementById('riga-entrada').value = getCleanField(r, 'entrada') !== '-' ? getCleanField(r, 'entrada') : '';
+      document.getElementById('riga-notas').value = getCleanField(r, 'notas') !== '-' ? getCleanField(r, 'notas') : '';
+      document.getElementById('riga-encargado').value = getCleanField(r, 'encargado') !== 'Da assegnare' ? getCleanField(r, 'encargado') : '';
       openModal('modal-riga');
     }
 
@@ -1489,7 +1524,7 @@
       try {
         const res = await apiCall("getUsuarios");
         if (res && res.success) {
-          renderAdminUtentiTable(res.data || []);
+          renderAdminUtentiTable(res.users || res.data || []);
         } else {
           tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Errore") + '</td></tr>';
         }
@@ -1524,6 +1559,22 @@
         html += '</tr>';
       });
       tbody.innerHTML = html;
+    }
+
+    
+    async function sincronizzaCollaboratoriEsistenti() {
+      toast("Sincronizzazione collaboratori in corso...", "info");
+      try {
+        const res = await apiCall("syncExistingCollaborators");
+        if (res && res.success) {
+          toast("Sincronizzati " + (res.createdCount || 0) + " nuovi collaboratori dal foglio!", "success");
+          loadAdminUtenti();
+        } else {
+          toast(res.error || "Errore sincronizzazione", "error");
+        }
+      } catch (err) {
+        toast("Errore di rete", "error");
+      }
     }
 
     function openModalAddUser() {
@@ -1794,7 +1845,7 @@
       try {
         const res = await apiCall("getCalendario", { mes: mes, anno: anno });
         if (res && res.success) {
-          renderCollabCalendario(res.rows || []);
+          renderCollabCalendario(res.rows || res.data || []);
         } else {
           tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Errore") + '</td></tr>';
         }
@@ -1814,15 +1865,24 @@
 
       let html = '';
       rows.forEach(r => {
+        const id = getCleanField(r, 'id');
+        const apt = getCleanField(r, 'apartamento');
+        const fecha = getCleanField(r, 'fecha');
+        const horario = getCleanField(r, 'horario');
+        const preparar = getCleanField(r, 'preparar');
+        const entrada = getCleanField(r, 'entrada');
+        const notas = getCleanField(r, 'notas');
+        const notaEnc = getCleanField(r, 'notaEncargado');
+
         html += '<tr>';
-        html += '<td><span class="badge badge-apt">' + (r.apartamento || '-') + '</span></td>';
-        html += '<td><strong>' + (r.fecha || '-') + '</strong></td>';
-        html += '<td>' + (r.horario || '-') + '</td>';
-        html += '<td>' + (r.preparar || '-') + '</td>';
-        html += '<td>' + (r.entrada || '-') + '</td>';
-        html += '<td>' + (r.notas || '-') + '</td>';
+        html += '<td><span class="badge badge-apt">' + apt + '</span></td>';
+        html += '<td><strong>' + fecha + '</strong></td>';
+        html += '<td>' + horario + '</td>';
+        html += '<td>' + preparar + '</td>';
+        html += '<td>' + entrada + '</td>';
+        html += '<td>' + notas + '</td>';
         html += '<td>';
-        html += '<button class="btn btn-sm" onclick="openModalNotaEnc(\'' + r.id + '\', \'' + (r.notaEncargado || '').replace(/'/g, "\\'") + '\')">' + (r.notaEncargado ? '💬 ' + r.notaEncargado : '➕ Aggiungi nota') + '</button>';
+        html += '<button class="btn btn-sm" onclick="openModalNotaEnc(\'' + id + '\', \'' + notaEnc.replace(/'/g, "\\'") + '\')">' + (notaEnc ? '💬 ' + notaEnc : '➕ Aggiungi nota') + '</button>';
         html += '</td>';
         html += '</tr>';
       });
