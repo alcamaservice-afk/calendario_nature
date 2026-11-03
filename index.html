@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Calendario Pulizie</title>
+  
+  <!-- PWA & Mobile Meta Tags -->
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Pulizie">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
+  <link rel="alternate icon" type="image/png" href="icons/icon-192.png">
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #14b8a6;
+      --primary-hover: #0d9488;
+      --primary-glow: rgba(20, 184, 166, 0.25);
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-hover: #273549;
+      --surface-border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --radius: 12px;
+      --shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+
+    /* Top Bar */
+    header {
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--surface-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #14b8a6, #0284c7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px var(--primary-glow);
+    }
+    .brand-logo svg { width: 22px; height: 22px; fill: #ffffff; }
+    .brand-title { font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em; }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .user-pill {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--success);
+      display: inline-block;
+      box-shadow: 0 0 8px var(--success);
+    }
+    .status-dot.syncing { background-color: var(--warning); animation: pulse 1s infinite; }
+
+    /* PWA Banner */
+    #pwa-install-banner {
+      background: linear-gradient(90deg, #14b8a6, #0284c7);
+      color: white;
+      padding: 10px 16px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.88rem;
+      font-weight: 500;
+      box-shadow: 0 2px 12px rgba(2, 132, 199, 0.3);
+      position: relative;
+      z-index: 105;
+    }
+    #pwa-install-banner button {
+      background: white;
+      color: #0f172a;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    /* Container */
+    main { flex: 1; padding: 20px; max-width: 1280px; margin: 0 auto; width: 100%; }
+
+    /* Nav Tabs */
+    .tabs-nav {
+      display: flex;
+      gap: 8px;
+      background: var(--surface);
+      padding: 6px;
+      border-radius: var(--radius);
+      border: 1px solid var(--surface-border);
+      margin-bottom: 20px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs-nav::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      color: #0f172a;
+      box-shadow: 0 2px 10px var(--primary-glow);
+    }
+
+    /* Views */
+    .view-section { display: none; animation: fadeIn 0.25s ease-out forwards; }
+    .view-section.active { display: block; }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Summary Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .stat-label { font-size: 0.78rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--text); }
+    .stat-value.primary { color: var(--primary); }
+    .stat-value.success { color: var(--success); }
+    .stat-value.warning { color: var(--warning); }
+    .stat-value.blue { color: var(--blue); }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface);
+      padding: 14px 18px;
+      border-radius: var(--radius);
+      border: 1px solid var(--surface-border);
+      margin-bottom: 20px;
+    }
+    .filter-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .filter-label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); }
+
+    /* Forms & Inputs */
+    select, input[type="text"], input[type="email"], input[type="password"], input[type="date"], input[type="number"], textarea {
+      background: #0f172a;
+      border: 1px solid var(--surface-border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    select:focus, input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
+    .form-group { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 0.84rem; font-weight: 500; color: var(--text-muted); }
+
+    /* Buttons */
+    .btn {
+      background: var(--surface-hover);
+      border: 1px solid var(--surface-border);
+      color: var(--text);
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: #334155; }
+    .btn-primary { background: var(--primary); color: #0f172a; border-color: transparent; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3); }
+    .btn-danger:hover { background: var(--danger); color: white; }
+    .btn-success { background: rgba(34, 197, 94, 0.15); color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
+    .btn-success:hover { background: var(--success); color: white; }
+    .btn-sm { padding: 6px 12px; font-size: 0.78rem; border-radius: 6px; }
+
+    /* Tables */
+    .table-container { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--surface-border); }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.86rem; }
+    th { background: #162032; padding: 12px 14px; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--surface-border); white-space: nowrap; }
+    td { padding: 12px 14px; border-bottom: 1px solid rgba(51, 65, 85, 0.5); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(39, 53, 73, 0.5); }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-apt { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-enc { background: rgba(139, 92, 246, 0.15); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3); }
+    .badge-success { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+    .badge-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+    /* Login Box */
+    .login-wrapper {
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 16px;
+      padding: 32px 28px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+    .login-logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #14b8a6, #0284c7);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px var(--primary-glow);
+    }
+    .login-logo svg { width: 36px; height: 36px; fill: white; }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease-out; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .modal-title { font-size: 1.15rem; font-weight: 700; }
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.4rem;
+      cursor: pointer;
+    }
+
+    /* Toast */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toast {
+      background: #1e293b;
+      border: 1px solid var(--surface-border);
+      color: white;
+      padding: 12px 18px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      animation: slideIn 0.25s ease-out;
+    }
+    .toast.success { border-left: 4px solid var(--success); }
+    .toast.error { border-left: 4px solid var(--danger); }
+    .toast.info { border-left: 4px solid var(--primary); }
+
+    /* Animations */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      header { padding: 10px 14px; }
+      main { padding: 12px; }
+      .brand-title { font-size: 1rem; }
+      .tab-btn { padding: 8px 12px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PWA Install Banner -->
+  <div id="pwa-install-banner">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span>🧹</span>
+      <span id="pwa-prompt-text">Installa l'App Calendario Pulizie sulla tua schermata home</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button id="btn-install-pwa">Installa</button>
+      <button style="background:transparent; color:white; padding:4px;" onclick="dismissPwaBanner()">✕</button>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <a href="#" class="brand">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24"><path d="M19.36 2.72l1.42 1.42-3.88 3.88-1.42-1.42 3.88-3.88m-5.88 5.88l1.42 1.42-7.07 7.07c-.39.39-1.02.39-1.41 0l-1.42-1.42c-.39-.39-.39-1.02 0-1.41l7.07-7.07m-5.65 9.9l1.41 1.41-1.41 1.42c-.78.78-2.05.78-2.83 0s-.78-2.05 0-2.83l1.41-1.41z"/></svg>
+      </div>
+      <div>
+        <div class="brand-title">Calendario Pulizie</div>
+      </div>
+    </a>
+    <div class="header-actions">
+      <div class="user-pill" id="user-status-pill" style="display:none;">
+        <span class="status-dot" id="sync-dot"></span>
+        <span id="header-user-name">Utente</span>
+        <span class="badge badge-apt" id="header-user-role" style="font-size:0.7rem; padding:2px 6px;">Admin</span>
+      </div>
+      <button class="btn btn-sm btn-danger" id="btn-logout" style="display:none;" onclick="appLogout()">Esci</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main>
+
+    <!-- ==================== VIEW: LOGIN ==================== -->
+    <div id="view-login" class="view-section active">
+      <div class="login-wrapper">
+        <div class="login-card">
+          <div class="login-logo">
+            <svg viewBox="0 0 24 24"><path d="M19.36 2.72l1.42 1.42-3.88 3.88-1.42-1.42 3.88-3.88m-5.88 5.88l1.42 1.42-7.07 7.07c-.39.39-1.02.39-1.41 0l-1.42-1.42c-.39-.39-.39-1.02 0-1.41l7.07-7.07m-5.65 9.9l1.41 1.41-1.41 1.42c-.78.78-2.05.78-2.83 0s-.78-2.05 0-2.83l1.41-1.41z"/></svg>
+          </div>
+          <h2 style="font-size: 1.4rem; font-weight:700; margin-bottom:6px;">Bentornato</h2>
+          <p style="color:var(--text-muted); font-size:0.86rem; margin-bottom:24px;">Accedi al tuo account per gestire pulizie e contabilità</p>
+
+          <form id="form-login" onsubmit="handleLoginSubmit(event)">
+            <div class="form-group" style="text-align:left;">
+              <label>Email</label>
+              <input type="email" id="login-email" required placeholder="tua@email.com">
+            </div>
+            <div class="form-group" style="text-align:left; margin-bottom:24px;">
+              <label>Password</label>
+              <input type="password" id="login-password" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn btn-primary" id="btn-login-submit" style="width:100%; padding:12px; font-size:0.95rem;">
+              Accedi
+            </button>
+          </form>
+
+          <div style="margin-top:20px; font-size:0.78rem; color:var(--text-muted);">
+            <a href="#" onclick="openModal('modal-script-url')" style="color:var(--text-muted); text-decoration:none;">⚙️ Impostazioni Connessione</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== VIEW: ADMIN ==================== -->
+    <div id="view-admin" class="view-section">
+      <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchAdminTab('calendario')">📅 Calendario</button>
+        <button class="tab-btn" onclick="switchAdminTab('collaboratori')">👥 Collaboratori</button>
+        <button class="tab-btn" onclick="switchAdminTab('contabilita')">💰 Contabilità</button>
+        <button class="tab-btn" onclick="switchAdminTab('configurazione')">⚙️ Configurazione</button>
+        <button class="tab-btn" onclick="switchAdminTab('profilo')">👤 Profilo</button>
+      </div>
+
+      <!-- Tab Admin: Calendario -->
+      <div id="admin-tab-calendario" class="admin-subview">
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">Mese:</span>
+            <select id="admin-filter-mes" onchange="loadAdminCalendario()">
+              <option value="1">Gennaio</option><option value="2">Febbraio</option><option value="3">Marzo</option>
+              <option value="4">Aprile</option><option value="5">Maggio</option><option value="6">Giugno</option>
+              <option value="7">Luglio</option><option value="8">Agosto</option><option value="9">Settembre</option>
+              <option value="10">Ottobre</option><option value="11">Novembre</option><option value="12">Dicembre</option>
+            </select>
+            <select id="admin-filter-anno" onchange="loadAdminCalendario()">
+              <option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Collaboratore:</span>
+            <select id="admin-filter-enc" onchange="loadAdminCalendario()">
+              <option value="">Tutti</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Appartamento:</span>
+            <select id="admin-filter-apt" onchange="loadAdminCalendario()">
+              <option value="">Tutti</option>
+            </select>
+          </div>
+          <div style="margin-left:auto;">
+            <button class="btn btn-primary" onclick="openModalAddRiga()">➕ Nuova Pulizia</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-container">
+            <table id="table-admin-calendario">
+              <thead>
+                <tr>
+                  <th>Appartamento</th>
+                  <th>Data Pulizia</th>
+                  <th>Orario</th>
+                  <th>Preparare Per</th>
+                  <th>Entrata Prossimi</th>
+                  <th>Note Admin</th>
+                  <th>Incaricato/a</th>
+                  <th>Note Incaricato</th>
+                  <th style="text-align:right;">Azioni</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-admin-calendario">
+                <tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento dati...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Admin: Collaboratori -->
+      <div id="admin-tab-collaboratori" class="admin-subview" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3 style="font-size:1.1rem; font-weight:700;">Gestione Account Collaboratori</h3>
+          <button class="btn btn-primary" onclick="openModalAddUser()">➕ Nuovo Collaboratore</button>
+        </div>
+
+        <div class="card">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Email</th>
+                  <th>Incaricato Key</th>
+                  <th>Ruolo</th>
+                  <th>Stato</th>
+                  <th>Ultimo Accesso</th>
+                  <th style="text-align:right;">Azioni</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-admin-utenti">
+                <tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento collaboratori...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Admin: Contabilità -->
+      <div id="admin-tab-contabilita" class="admin-subview" style="display:none;">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Totale Compensi</span>
+            <span class="stat-value blue" id="admin-cont-totale">€ 0.00</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Già Pagato</span>
+            <span class="stat-value success" id="admin-cont-pagato">€ 0.00</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">In Attesa</span>
+            <span class="stat-value warning" id="admin-cont-attesa">€ 0.00</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Totale Pulizie</span>
+            <span class="stat-value primary" id="admin-cont-pulizie">0</span>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">Mese:</span>
+            <select id="admin-cont-filter-mes" onchange="loadAdminContabilita()">
+              <option value="">Tutti i mesi</option>
+              <option value="1">Gennaio</option><option value="2">Febbraio</option><option value="3">Marzo</option>
+              <option value="4">Aprile</option><option value="5">Maggio</option><option value="6">Giugno</option>
+              <option value="7">Luglio</option><option value="8">Agosto</option><option value="9">Settembre</option>
+              <option value="10">Ottobre</option><option value="11">Novembre</option><option value="12">Dicembre</option>
+            </select>
+            <select id="admin-cont-filter-anno" onchange="loadAdminContabilita()">
+              <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Collaboratore:</span>
+            <select id="admin-cont-filter-enc" onchange="loadAdminContabilita()">
+              <option value="">Tutti</option>
+            </select>
+          </div>
+          <div style="margin-left:auto; display:flex; gap:8px;">
+            <button class="btn btn-primary" onclick="openModalCalcolaComp()">⚡ Calcola da Calendario</button>
+            <button class="btn btn-secondary" onclick="openModalAddCont()">➕ Aggiungi Record</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Periodo</th>
+                  <th>Collaboratore</th>
+                  <th>N. Pulizie</th>
+                  <th>Prezzo/cad</th>
+                  <th>Spese Extra</th>
+                  <th>Totale</th>
+                  <th>Stato</th>
+                  <th>Data Pagamento</th>
+                  <th>Note</th>
+                  <th style="text-align:right;">Azioni</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-admin-contabilita">
+                <tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento contabilità...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Admin: Configurazione -->
+      <div id="admin-tab-configurazione" class="admin-subview" style="display:none;">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
+          <div class="card">
+            <div class="card-title">🏢 Appartamenti Gestiti</div>
+            <p style="color:var(--text-muted); font-size:0.84rem; margin-bottom:12px;">Un appartamento per riga</p>
+            <textarea id="cfg-apartamentos" rows="8" style="width:100%; margin-bottom:14px;"></textarea>
+            <button class="btn btn-primary" onclick="salvaConfigurazioneApp()">Salva Appartamenti</button>
+          </div>
+
+          <div class="card">
+            <div class="card-title">👥 Nomi Incaricati</div>
+            <p style="color:var(--text-muted); font-size:0.84rem; margin-bottom:12px;">Un incaricato per riga (es: DANIELA, LINA)</p>
+            <textarea id="cfg-encargados" rows="8" style="width:100%; margin-bottom:14px;"></textarea>
+            <button class="btn btn-primary" onclick="salvaConfigurazioneApp()">Salva Incaricati</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Admin: Profilo -->
+      <div id="admin-tab-profilo" class="admin-subview" style="display:none;">
+        <div class="card" style="max-width:500px; margin:0 auto;">
+          <div class="card-title">👤 Profilo Amministratore</div>
+          <form onsubmit="handleCambiaPassword(event)">
+            <div class="form-group">
+              <label>Vecchia Password</label>
+              <input type="password" id="admin-old-pwd" required>
+            </div>
+            <div class="form-group">
+              <label>Nuova Password</label>
+              <input type="password" id="admin-new-pwd" required minlength="6">
+            </div>
+            <div class="form-group" style="margin-bottom:20px;">
+              <label>Conferma Nuova Password</label>
+              <input type="password" id="admin-conf-pwd" required minlength="6">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Aggiorna Password</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== VIEW: COLLABORATORE ==================== -->
+    <div id="view-collaborator" class="view-section">
+      <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchCollabTab('calendario')">📅 Il Mio Calendario</button>
+        <button class="tab-btn" onclick="switchCollabTab('compensi')">💰 I Miei Compensi</button>
+        <button class="tab-btn" onclick="switchCollabTab('profilo')">👤 Profilo</button>
+      </div>
+
+      <!-- Tab Collab: Calendario Personale -->
+      <div id="collab-tab-calendario" class="collab-subview">
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">Mese:</span>
+            <select id="collab-filter-mes" onchange="loadCollabCalendario()">
+              <option value="1">Gennaio</option><option value="2">Febbraio</option><option value="3">Marzo</option>
+              <option value="4">Aprile</option><option value="5">Maggio</option><option value="6">Giugno</option>
+              <option value="7">Luglio</option><option value="8">Agosto</option><option value="9">Settembre</option>
+              <option value="10">Ottobre</option><option value="11">Novembre</option><option value="12">Dicembre</option>
+            </select>
+            <select id="collab-filter-anno" onchange="loadCollabCalendario()">
+              <option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option>
+            </select>
+          </div>
+          <div style="margin-left:auto;">
+            <span class="badge badge-enc" id="collab-count-badge">0 Pulizie</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Appartamento</th>
+                  <th>Data Pulizia</th>
+                  <th>Orario</th>
+                  <th>Preparare Per</th>
+                  <th>Entrata Prossimi</th>
+                  <th>Note Admin</th>
+                  <th>La Mia Nota</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-collab-calendario">
+                <tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento del tuo calendario...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Collab: Compensi Personali -->
+      <div id="collab-tab-compensi" class="collab-subview" style="display:none;">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Pulizie Totali</span>
+            <span class="stat-value primary" id="collab-stat-pulizie">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Compenso Totale</span>
+            <span class="stat-value blue" id="collab-stat-totale">€ 0.00</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Già Saldato</span>
+            <span class="stat-value success" id="collab-stat-pagato">€ 0.00</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">In Attesa</span>
+            <span class="stat-value warning" id="collab-stat-attesa">€ 0.00</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Storico Compensi e Pagamenti</div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Periodo</th>
+                  <th>N. Pulizie</th>
+                  <th>Tariffa</th>
+                  <th>Spese Extra</th>
+                  <th>Totale</th>
+                  <th>Stato</th>
+                  <th>Data Pagamento</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-collab-compensi">
+                <tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento compensi...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Collab: Profilo -->
+      <div id="collab-tab-profilo" class="collab-subview" style="display:none;">
+        <div class="card" style="max-width:500px; margin:0 auto;">
+          <div class="card-title">👤 Il Mio Profilo</div>
+          <div style="margin-bottom:20px; font-size:0.9rem; line-height:1.6;">
+            <div><strong>Nome:</strong> <span id="collab-info-nome">-</span></div>
+            <div><strong>Email:</strong> <span id="collab-info-email">-</span></div>
+            <div><strong>Incaricato:</strong> <span class="badge badge-enc" id="collab-info-enc">-</span></div>
+          </div>
+          <hr style="border:none; border-top:1px solid var(--surface-border); margin-bottom:20px;">
+          <h4 style="font-size:0.95rem; margin-bottom:12px;">Cambia Password</h4>
+          <form onsubmit="handleCambiaPassword(event)">
+            <div class="form-group">
+              <label>Vecchia Password</label>
+              <input type="password" id="collab-old-pwd" required>
+            </div>
+            <div class="form-group">
+              <label>Nuova Password</label>
+              <input type="password" id="collab-new-pwd" required minlength="6">
+            </div>
+            <div class="form-group" style="margin-bottom:20px;">
+              <label>Conferma Nuova Password</label>
+              <input type="password" id="collab-conf-pwd" required minlength="6">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Aggiorna Password</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Modal: Nuova/Modifica Pulizia (Admin) -->
+  <div class="modal-overlay" id="modal-riga">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-riga-title">Nuova Pulizia</div>
+        <button class="modal-close" onclick="closeModal('modal-riga')">✕</button>
+      </div>
+      <form onsubmit="handleSaveRiga(event)">
+        <input type="hidden" id="riga-id">
+        <div class="form-group">
+          <label>Appartamento</label>
+          <select id="riga-apt" required></select>
+        </div>
+        <div class="form-group">
+          <label>Data Pulizia</label>
+          <input type="date" id="riga-fecha" required>
+        </div>
+        <div class="form-group">
+          <label>Orario</label>
+          <input type="text" id="riga-horario" placeholder="Es: 11:00">
+        </div>
+        <div class="form-group">
+          <label>Preparare Per</label>
+          <input type="text" id="riga-preparar" placeholder="Es: 2 PAX (Matrimoniale)">
+        </div>
+        <div class="form-group">
+          <label>Entrata Prossimi Ospiti</label>
+          <input type="text" id="riga-entrada" placeholder="Es: 15:00">
+        </div>
+        <div class="form-group">
+          <label>Note Admin</label>
+          <input type="text" id="riga-notas" placeholder="Es: Cambio lenzuola completo">
+        </div>
+        <div class="form-group" style="margin-bottom:20px;">
+          <label>Incaricato/a</label>
+          <select id="riga-encargado" required></select>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn" onclick="closeModal('modal-riga')">Annulla</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-riga">Salva Pulizia</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Nota Incaricato -->
+  <div class="modal-overlay" id="modal-nota-enc">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Nota Incaricato</div>
+        <button class="modal-close" onclick="closeModal('modal-nota-enc')">✕</button>
+      </div>
+      <form onsubmit="handleSaveNotaEnc(event)">
+        <input type="hidden" id="nota-enc-id">
+        <div class="form-group" style="margin-bottom:20px;">
+          <label>Note sulla pulizia (es: segnalazioni, guasti, rifornimenti)</label>
+          <textarea id="nota-enc-text" rows="4" style="width:100%;" placeholder="Inserisci qui eventuali note..."></textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn" onclick="closeModal('modal-nota-enc')">Annulla</button>
+          <button type="submit" class="btn btn-primary">Salva Nota</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Nuovo Collaboratore (Admin) -->
+  <div class="modal-overlay" id="modal-user">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Nuovo Collaboratore</div>
+        <button class="modal-close" onclick="closeModal('modal-user')">✕</button>
+      </div>
+      <form onsubmit="handleCreateUser(event)">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="user-email" required placeholder="collaboratore@pulizie.it">
+        </div>
+        <div class="form-group">
+          <label>Nome Completo</label>
+          <input type="text" id="user-nombre" required placeholder="Es: Maria Rossi">
+        </div>
+        <div class="form-group">
+          <label>Chiave Incaricato (Nome nel Calendario)</label>
+          <select id="user-enckey" required></select>
+        </div>
+        <div class="form-group" style="margin-bottom:20px;">
+          <label>Password Iniziale</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="user-password" required minlength="6" style="flex:1;">
+            <button type="button" class="btn btn-sm" onclick="generaPasswordCasuale('user-password')">🎲 Genera</button>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn" onclick="closeModal('modal-user')">Annulla</button>
+          <button type="submit" class="btn btn-primary">Crea Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Reset Password (Admin) -->
+  <div class="modal-overlay" id="modal-reset-pwd">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Reset Password Collaboratore</div>
+        <button class="modal-close" onclick="closeModal('modal-reset-pwd')">✕</button>
+      </div>
+      <form onsubmit="handleResetPasswordSubmit(event)">
+        <input type="hidden" id="reset-user-email">
+        <p style="color:var(--text-muted); font-size:0.86rem; margin-bottom:14px;">Reimposta la password per: <strong id="reset-user-email-label"></strong></p>
+        <div class="form-group" style="margin-bottom:20px;">
+          <label>Nuova Password</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="reset-new-password" required minlength="6" style="flex:1;">
+            <button type="button" class="btn btn-sm" onclick="generaPasswordCasuale('reset-new-password')">🎲 Genera</button>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn" onclick="closeModal('modal-reset-pwd')">Annulla</button>
+          <button type="submit" class="btn btn-primary">Salva Nuova Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Calcola Compenso da Calendario -->
+  <div class="modal-overlay" id="modal-calc-comp">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">⚡ Calcola Compenso da Calendario</div>
+        <button class="modal-close" onclick="closeModal('modal-calc-comp')">✕</button>
+      </div>
+      <form onsubmit="handleExecCalcolaComp(event)">
+        <div class="form-group">
+          <label>Collaboratore</label>
+          <select id="calc-encargado" required></select>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label>Mese</label>
+            <select id="calc-mes" required>
+              <option value="1">Gennaio</option><option value="2">Febbraio</option><option value="3">Marzo</option>
+              <option value="4">Aprile</option><option value="5">Maggio</option><option value="6">Giugno</option>
+              <option value="7">Luglio</option><option value="8">Agosto</option><option value="9">Settembre</option>
+              <option value="10">Ottobre</option><option value="11">Novembre</option><option value="12">Dicembre</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Anno</label>
+            <select id="calc-anno" required>
+              <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Tariffa per Pulizia (€)</label>
+          <input type="number" step="0.5" id="calc-tarifa" value="40" required>
+        </div>
+        <div id="calc-result-box" style="display:none; background:rgba(20,184,166,0.1); border:1px solid var(--primary); border-radius:8px; padding:12px; margin-bottom:16px;">
+          <div style="font-size:0.88rem; font-weight:600; color:var(--primary);">Pulizie trovate: <span id="calc-count">0</span></div>
+          <div style="font-size:1.1rem; font-weight:700; margin-top:4px;">Totale Calcolato: <span id="calc-totale">€ 0.00</span></div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn" onclick="closeModal('modal-calc-comp')">Chiudi</button>
+          <button type="button" class="btn" onclick="anteprimaCalcolo()">Calcola Anteprima</button>
+          <button type="submit" class="btn btn-primary" id="btn-salva-calc-comp" style="display:none;">Salva in Contabilità</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Aggiorna Stato Pagamento -->
+  <div class="modal-overlay" id="modal-stato-cont">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Aggiorna Stato Pagamento</div>
+        <button class="modal-close" onclick="closeModal('modal-stato-cont')">✕</button>
+      </div>
+      <form onsubmit="handleUpdateStatoCont(event)">
+        <input type="hidden" id="stato-cont-id">
+        <div class="form-group">
+          <label>Stato Pagamento</label>
+          <select id="stato-cont-estado">
+            <option value="pendiente">🟡 In Attesa</option>
+            <option value="pagato">🟢 Pagato</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Data Pagamento</label>
+          <input type="date" id="stato-cont-fecha">
+        </div>
+        <div class="form-group" style="margin-bottom:20px;">
+          <label>Note Pagamento</label>
+          <input type="text" id="stato-cont-notas" placeholder="Es: Bonifico effettuato il 05/11">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn" onclick="closeModal('modal-stato-cont')">Annulla</button>
+          <button type="submit" class="btn btn-primary">Salva Stato</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Configurazione Script URL -->
+  <div class="modal-overlay" id="modal-script-url">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">⚙️ Connessione Backend Google Apps Script</div>
+        <button class="modal-close" onclick="closeModal('modal-script-url')">✕</button>
+      </div>
+      <div class="form-group" style="margin-bottom:20px;">
+        <label>URL Web App Apps Script</label>
+        <input type="text" id="cfg-script-url" style="width:100%;">
+        <span style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Inserisci l'URL del deployment Web App che termina con /exec</span>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" class="btn" onclick="closeModal('modal-script-url')">Annulla</button>
+        <button type="button" class="btn btn-primary" onclick="salvaScriptUrl()">Salva e Riconnetti</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- ==================== APPLICATION SCRIPT ==================== -->
+  <script>
+    // --- Configurazione Iniziale ---
+    const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxpUbcKCoxEqKB6rBy2FvW_FQXVROdl6Gkakc9gtXhpDswRdXtml2M4eyXF5XOj340AA/exec";
+    let SCRIPT_URL = localStorage.getItem("CP_SCRIPT_URL") || DEFAULT_SCRIPT_URL;
+
+    // Sessione
+    let SESSION = {
+      token: localStorage.getItem("CP_TOKEN") || null,
+      email: localStorage.getItem("CP_EMAIL") || null,
+      nombre: localStorage.getItem("CP_NOMBRE") || null,
+      role: localStorage.getItem("CP_ROLE") || null,
+      encargadoKey: localStorage.getItem("CP_ENCKEY") || null
+    };
+
+    // Cache configurazione
+    let APP_CONFIG = { apartamentos: [], encargados: [] };
+    let CURRENT_CALENDARIO_ROWS = [];
+
+    // --- PWA Service Worker & Install Prompt ---
+    let deferredInstallPrompt = null;
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW reg error:', err));
+      });
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      const banner = document.getElementById('pwa-install-banner');
+      if (banner) banner.style.display = 'flex';
+    });
+
+    document.getElementById('btn-install-pwa').addEventListener('click', async () => {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const { outcome } = await deferredInstallPrompt.userChoice;
+        if (outcome === 'accepted') {
+          dismissPwaBanner();
+        }
+        deferredInstallPrompt = null;
+      } else {
+        // Istruzioni per iOS o browser che non supportano prompt programmatico
+        alert("Per installare su iOS:\n1. Tocca il pulsante Condividi (icona quadrato con freccia in alto)\n2. Scorri e tocca 'Aggiungi alla schermata Home' ➕");
+      }
+    });
+
+    function dismissPwaBanner() {
+      document.getElementById('pwa-install-banner').style.display = 'none';
+    }
+
+    // --- Utility Funzioni ---
+    function toast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const t = document.createElement('div');
+      t.className = 'toast ' + type;
+      t.innerText = message;
+      container.appendChild(t);
+      setTimeout(() => { t.remove(); }, 4000);
+    }
+
+    function setSyncing(isSyncing) {
+      const dot = document.getElementById('sync-dot');
+      if (dot) {
+        if (isSyncing) dot.classList.add('syncing');
+        else dot.classList.remove('syncing');
+      }
+    }
+
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+    }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('active');
+    }
+
+    function generaPasswordCasuale(targetInputId) {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+      let pwd = "";
+      for (let i = 0; i < 10; i++) {
+        pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      document.getElementById(targetInputId).value = pwd;
+    }
+
+    // --- API CLIENT (POST con CORS Friendly text/plain) ---
+    async function apiCall(action, payload = {}) {
+      setSyncing(true);
+      const bodyData = Object.assign({ action: action, token: SESSION.token }, payload);
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(bodyData)
+        });
+        const json = await response.json();
+        setSyncing(false);
+        return json;
+      } catch (err) {
+        setSyncing(false);
+        console.error("API error (" + action + "):", err);
+        throw err;
+      }
+    }
+
+    // --- Avvio e Routing Viste ---
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Imposta data corrente nei selettori
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+
+      ['admin-filter-mes', 'admin-cont-filter-mes', 'collab-filter-mes', 'calc-mes'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.value === "") el.value = currentMonth;
+        else if (el) el.value = currentMonth;
+      });
+      ['admin-filter-anno', 'admin-cont-filter-anno', 'collab-filter-anno', 'calc-anno'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = currentYear;
+      });
+
+      document.getElementById('cfg-script-url').value = SCRIPT_URL;
+
+      // Verifica sessione salvata
+      if (SESSION.token) {
+        try {
+          const res = await apiCall("verificarSesion");
+          if (res && res.valid) {
+            SESSION.role = res.role;
+            SESSION.email = res.email;
+            SESSION.nombre = res.nombre;
+            SESSION.encargadoKey = res.encargadoKey;
+            showAppView();
+            return;
+          }
+        } catch (e) {
+          console.warn("Verifica sessione fallita, richiesta login");
+        }
+      }
+      showLoginView();
+    });
+
+    function showLoginView() {
+      document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+      document.getElementById('view-login').classList.add('active');
+      document.getElementById('user-status-pill').style.display = 'none';
+      document.getElementById('btn-logout').style.display = 'none';
+    }
+
+    function showAppView() {
+      document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+      document.getElementById('user-status-pill').style.display = 'flex';
+      document.getElementById('btn-logout').style.display = 'inline-flex';
+      document.getElementById('header-user-name').innerText = SESSION.nombre || SESSION.email;
+      document.getElementById('header-user-role').innerText = SESSION.role === 'admin' ? 'Admin' : 'Collaboratore';
+
+      if (SESSION.role === 'admin') {
+        document.getElementById('view-admin').classList.add('active');
+        initAdminView();
+      } else {
+        document.getElementById('view-collaborator').classList.add('active');
+        initCollabView();
+      }
+    }
+
+    // --- Login & Logout ---
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const btn = document.getElementById('btn-login-submit');
+
+      btn.disabled = true;
+      btn.innerText = "Accesso in corso...";
+
+      try {
+        const res = await apiCall("login", { email: email, password: password });
+        btn.disabled = false;
+        btn.innerText = "Accedi";
+
+        if (res && res.success) {
+          SESSION.token = res.token;
+          SESSION.email = res.user.email;
+          SESSION.nombre = res.user.nombre;
+          SESSION.role = res.user.role;
+          SESSION.encargadoKey = res.user.encargadoKey;
+
+          localStorage.setItem("CP_TOKEN", SESSION.token);
+          localStorage.setItem("CP_EMAIL", SESSION.email);
+          localStorage.setItem("CP_NOMBRE", SESSION.nombre);
+          localStorage.setItem("CP_ROLE", SESSION.role);
+          localStorage.setItem("CP_ENCKEY", SESSION.encargadoKey || "");
+
+          toast("Accesso effettuato con successo!", "success");
+          showAppView();
+        } else {
+          toast(res.error || "Credenziali non valide", "error");
+        }
+      } catch (err) {
+        btn.disabled = false;
+        btn.innerText = "Accedi";
+        toast("Errore di connessione: verifica l'URL dello script", "error");
+      }
+    }
+
+    async function appLogout() {
+      try { await apiCall("logout"); } catch(e){}
+      SESSION = { token: null, email: null, nombre: null, role: null, encargadoKey: null };
+      localStorage.removeItem("CP_TOKEN");
+      localStorage.removeItem("CP_EMAIL");
+      localStorage.removeItem("CP_NOMBRE");
+      localStorage.removeItem("CP_ROLE");
+      localStorage.removeItem("CP_ENCKEY");
+      toast("Disconnesso", "info");
+      showLoginView();
+    }
+
+    function salvaScriptUrl() {
+      const val = document.getElementById('cfg-script-url').value.trim();
+      if (!val) return;
+      SCRIPT_URL = val;
+      localStorage.setItem("CP_SCRIPT_URL", val);
+      closeModal('modal-script-url');
+      toast("URL script aggiornato", "success");
+    }
+
+    // --- Tab Navigation ---
+    function switchAdminTab(tabName) {
+      document.querySelectorAll('#view-admin .tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.admin-subview').forEach(s => s.style.display = 'none');
+      event.currentTarget.classList.add('active');
+      document.getElementById('admin-tab-' + tabName).style.display = 'block';
+
+      if (tabName === 'calendario') loadAdminCalendario();
+      if (tabName === 'collaboratori') loadAdminUtenti();
+      if (tabName === 'contabilita') loadAdminContabilita();
+      if (tabName === 'configurazione') loadAdminConfig();
+    }
+
+    function switchCollabTab(tabName) {
+      document.querySelectorAll('#view-collaborator .tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.collab-subview').forEach(s => s.style.display = 'none');
+      event.currentTarget.classList.add('active');
+      document.getElementById('collab-tab-' + tabName).style.display = 'block';
+
+      if (tabName === 'calendario') loadCollabCalendario();
+      if (tabName === 'compensi') loadCollabCompensi();
+    }
+
+    // --- Inizializzazione Viste ---
+    async function initAdminView() {
+      await loadAppConfig();
+      loadAdminCalendario();
+    }
+
+    async function initCollabView() {
+      document.getElementById('collab-info-nome').innerText = SESSION.nombre;
+      document.getElementById('collab-info-email').innerText = SESSION.email;
+      document.getElementById('collab-info-enc').innerText = SESSION.encargadoKey || "Non assegnato";
+      loadCollabCalendario();
+    }
+
+    async function loadAppConfig() {
+      try {
+        const res = await apiCall("getAppConfig");
+        if (res && res.success) {
+          APP_CONFIG = res;
+          populateConfigDropdowns();
+        }
+      } catch (e) {
+        console.warn("Errore caricamento config:", e);
+      }
+    }
+
+    function populateConfigDropdowns() {
+      const aptSelects = ['admin-filter-apt', 'riga-apt'];
+      aptSelects.forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const currentVal = sel.value;
+        sel.innerHTML = id.includes('filter') ? '<option value="">Tutti</option>' : '<option value="">Seleziona...</option>';
+        (APP_CONFIG.apartamentos || []).forEach(apt => {
+          sel.innerHTML += '<option value="' + apt + '">' + apt + '</option>';
+        });
+        if (currentVal) sel.value = currentVal;
+      });
+
+      const encSelects = ['admin-filter-enc', 'admin-cont-filter-enc', 'riga-encargado', 'user-enckey', 'calc-encargado'];
+      encSelects.forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const currentVal = sel.value;
+        sel.innerHTML = id.includes('filter') ? '<option value="">Tutti</option>' : '<option value="">Seleziona...</option>';
+        (APP_CONFIG.encargados || []).forEach(enc => {
+          sel.innerHTML += '<option value="' + enc + '">' + enc + '</option>';
+        });
+        if (currentVal) sel.value = currentVal;
+      });
+    }
+
+    // --- Calendario Admin ---
+    async function loadAdminCalendario() {
+      const mes = document.getElementById('admin-filter-mes').value;
+      const anno = document.getElementById('admin-filter-anno').value;
+      const enc = document.getElementById('admin-filter-enc').value;
+      const apt = document.getElementById('admin-filter-apt').value;
+      const tbody = document.getElementById('tbody-admin-calendario');
+
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento dati...</td></tr>';
+
+      try {
+        const res = await apiCall("getCalendario", { mes: mes, anno: anno, userFilter: enc, aptFilter: apt });
+        if (res && res.success) {
+          CURRENT_CALENDARIO_ROWS = res.rows || [];
+          renderAdminCalendarioTable(CURRENT_CALENDARIO_ROWS);
+        } else {
+          tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Errore") + '</td></tr>';
+        }
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--danger);">Errore di connessione</td></tr>';
+      }
+    }
+
+    function renderAdminCalendarioTable(rows) {
+      const tbody = document.getElementById('tbody-admin-calendario');
+      if (!rows || rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Nessuna pulizia programmata per questo periodo</td></tr>';
+        return;
+      }
+
+      let html = '';
+      rows.forEach(r => {
+        html += '<tr>';
+        html += '<td><span class="badge badge-apt">' + (r.apartamento || '-') + '</span></td>';
+        html += '<td><strong>' + (r.fecha || '-') + '</strong></td>';
+        html += '<td>' + (r.horario || '-') + '</td>';
+        html += '<td>' + (r.preparar || '-') + '</td>';
+        html += '<td>' + (r.entrada || '-') + '</td>';
+        html += '<td>' + (r.notas || '-') + '</td>';
+        html += '<td><span class="badge badge-enc">' + (r.encargado || 'Da assegnare') + '</span></td>';
+        html += '<td>' + (r.notaEncargado ? '<span style="color:var(--primary); font-size:0.8rem;">💬 ' + r.notaEncargado + '</span>' : '<span style="color:var(--text-muted);">-</span>') + '</td>';
+        html += '<td style="text-align:right; white-space:nowrap;">';
+        html += '<button class="btn btn-sm" onclick="openModalEditRiga(\'' + r.id + '\')" style="margin-right:6px;">✏️</button>';
+        html += '<button class="btn btn-sm btn-danger" onclick="eliminaRiga(\'' + r.id + '\')">🗑️</button>';
+        html += '</td>';
+        html += '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function openModalAddRiga() {
+      document.getElementById('modal-riga-title').innerText = "Nuova Pulizia";
+      document.getElementById('riga-id').value = "";
+      document.getElementById('riga-fecha').value = "";
+      document.getElementById('riga-horario').value = "";
+      document.getElementById('riga-preparar').value = "";
+      document.getElementById('riga-entrada').value = "";
+      document.getElementById('riga-notas').value = "";
+      openModal('modal-riga');
+    }
+
+    function openModalEditRiga(id) {
+      const r = CURRENT_CALENDARIO_ROWS.find(item => item.id == id);
+      if (!r) return;
+      document.getElementById('modal-riga-title').innerText = "Modifica Pulizia";
+      document.getElementById('riga-id').value = r.id;
+      document.getElementById('riga-apt').value = r.apartamento || "";
+      document.getElementById('riga-fecha').value = r.fecha || "";
+      document.getElementById('riga-horario').value = r.horario || "";
+      document.getElementById('riga-preparar').value = r.preparar || "";
+      document.getElementById('riga-entrada').value = r.entrada || "";
+      document.getElementById('riga-notas').value = r.notas || "";
+      document.getElementById('riga-encargado').value = r.encargado || "";
+      openModal('modal-riga');
+    }
+
+    async function handleSaveRiga(e) {
+      e.preventDefault();
+      const mes = document.getElementById('admin-filter-mes').value;
+      const anno = document.getElementById('admin-filter-anno').value;
+      const rowData = {
+        id: document.getElementById('riga-id').value,
+        apartamento: document.getElementById('riga-apt').value,
+        fecha: document.getElementById('riga-fecha').value,
+        horario: document.getElementById('riga-horario').value,
+        preparar: document.getElementById('riga-preparar').value,
+        entrada: document.getElementById('riga-entrada').value,
+        notas: document.getElementById('riga-notas').value,
+        encargado: document.getElementById('riga-encargado').value
+      };
+
+      try {
+        const res = await apiCall("saveRiga", { rowData: rowData, mes: mes, anno: anno });
+        if (res && res.success) {
+          closeModal('modal-riga');
+          toast("Pulizia salvata con successo", "success");
+          loadAdminCalendario();
+        } else {
+          toast(res.error || "Errore nel salvataggio", "error");
+        }
+      } catch (err) {
+        toast("Errore di rete", "error");
+      }
+    }
+
+    async function eliminaRiga(id) {
+      if (!confirm("Sei sicuro di voler eliminare questa pulizia dal calendario?")) return;
+      const mes = document.getElementById('admin-filter-mes').value;
+      const anno = document.getElementById('admin-filter-anno').value;
+      try {
+        const res = await apiCall("deleteRiga", { id: id, mes: mes, anno: anno });
+        if (res && res.success) {
+          toast("Pulizia eliminata", "info");
+          loadAdminCalendario();
+        } else {
+          toast(res.error || "Errore eliminazione", "error");
+        }
+      } catch (err) {
+        toast("Errore di rete", "error");
+      }
+    }
+
+    // --- Gestione Collaboratori (Admin) ---
+    async function loadAdminUtenti() {
+      const tbody = document.getElementById('tbody-admin-utenti');
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento collaboratori...</td></tr>';
+      try {
+        const res = await apiCall("getUsuarios");
+        if (res && res.success) {
+          renderAdminUtentiTable(res.data || []);
+        } else {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Errore") + '</td></tr>';
+        }
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">Errore di rete</td></tr>';
+      }
+    }
+
+    function renderAdminUtentiTable(utenti) {
+      const tbody = document.getElementById('tbody-admin-utenti');
+      if (!utenti || utenti.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Nessun collaboratore registrato</td></tr>';
+        return;
+      }
+      let html = '';
+      utenti.forEach(u => {
+        const isBlocked = u.bloqueado === true;
+        html += '<tr>';
+        html += '<td><strong>' + (u.nombre || '-') + '</strong></td>';
+        html += '<td>' + (u.email || '-') + '</td>';
+        html += '<td><span class="badge badge-enc">' + (u.encargadoKey || '-') + '</span></td>';
+        html += '<td>' + (u.role === 'admin' ? '<span class="badge badge-apt">Admin</span>' : 'Collaboratore') + '</td>';
+        html += '<td>' + (isBlocked ? '<span class="badge badge-danger">Bloccato</span>' : '<span class="badge badge-success">Attivo</span>') + '</td>';
+        html += '<td style="color:var(--text-muted); font-size:0.8rem;">' + (u.ultimoAcceso || '-') + '</td>';
+        html += '<td style="text-align:right; white-space:nowrap;">';
+        if (u.role !== 'admin') {
+          html += '<button class="btn btn-sm" onclick="openResetPasswordModal(\'' + u.email + '\')" title="Reset Password" style="margin-right:6px;">🔑</button>';
+          html += '<button class="btn btn-sm ' + (isBlocked ? 'btn-success' : 'btn-danger') + '" onclick="toggleBloccaUser(\'' + u.email + '\')" style="margin-right:6px;">' + (isBlocked ? 'Sblocca' : 'Blocca') + '</button>';
+          html += '<button class="btn btn-sm btn-danger" onclick="eliminaUser(\'' + u.email + '\')">🗑️</button>';
+        }
+        html += '</td>';
+        html += '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function openModalAddUser() {
+      document.getElementById('user-email').value = "";
+      document.getElementById('user-nombre').value = "";
+      generaPasswordCasuale('user-password');
+      openModal('modal-user');
+    }
+
+    async function handleCreateUser(e) {
+      e.preventDefault();
+      const userData = {
+        email: document.getElementById('user-email').value.trim(),
+        nombre: document.getElementById('user-nombre').value.trim(),
+        encargadoKey: document.getElementById('user-enckey').value,
+        password: document.getElementById('user-password').value,
+        role: "colaborador"
+      };
+
+      try {
+        const res = await apiCall("crearUsuario", { userData: userData });
+        if (res && res.success) {
+          closeModal('modal-user');
+          toast("Account collaboratore creato con successo!", "success");
+          loadAdminUtenti();
+        } else {
+          toast(res.error || "Errore nella creazione", "error");
+        }
+      } catch (err) {
+        toast("Errore di rete", "error");
+      }
+    }
+
+    function openResetPasswordModal(email) {
+      document.getElementById('reset-user-email').value = email;
+      document.getElementById('reset-user-email-label').innerText = email;
+      generaPasswordCasuale('reset-new-password');
+      openModal('modal-reset-pwd');
+    }
+
+    async function handleResetPasswordSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('reset-user-email').value;
+      const newPwd = document.getElementById('reset-new-password').value;
+      try {
+        const res = await apiCall("resetPasswordUsuario", { id: email, newPassword: newPwd });
+        if (res && res.success) {
+          closeModal('modal-reset-pwd');
+          toast("Password reimpostata con successo!", "success");
+        } else {
+          toast(res.error || "Errore reset", "error");
+        }
+      } catch (err) {
+        toast("Errore di rete", "error");
+      }
+    }
+
+    async function toggleBloccaUser(email) {
+      try {
+        const res = await apiCall("toggleBloquearUsuario", { id: email });
+        if (res && res.success) {
+          toast(res.bloqueado ? "Collaboratore bloccato" : "Collaboratore sbloccato", "info");
+          loadAdminUtenti();
+        } else {
+          toast(res.error || "Errore", "error");
+        }
+      } catch (err) {
+        toast("Errore di rete", "error");
+      }
+    }
+
+    async function eliminaUser(email) {
+      if (!confirm("Sei sicuro di voler eliminare questo collaboratore?\n\nLo storico dei pagamenti sarà conservato nel foglio Contabilità e le pulizie future resteranno da riassegnare.")) return;
+      try {
+        const res = await apiCall("eliminarUsuario", { id: email });
+        if (res && res.success) {
+          toast("Collaboratore eliminato (storico contabilità preservato)", "info");
+          loadAdminUtenti();
+        } else {
+          toast(res.error || "Errore eliminazione", "error");
+        }
+      } catch (err) {
+        toast("Errore di rete", "error");
+      }
+    }
+
+    // --- Contabilità Admin ---
+    async function loadAdminContabilita() {
+      const mes = document.getElementById('admin-cont-filter-mes').value;
+      const anno = document.getElementById('admin-cont-filter-anno').value;
+      const enc = document.getElementById('admin-cont-filter-enc').value;
+      const tbody = document.getElementById('tbody-admin-contabilita');
+
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento contabilità...</td></tr>';
+
+      try {
+        const res = await apiCall("getContabilidad", { mes: mes, anno: anno, encargado: enc });
+        if (res && res.success) {
+          renderAdminContabilita(res.data || []);
+        } else {
+          tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Errore") + '</td></tr>';
+        }
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--danger);">Errore di rete</td></tr>';
+      }
+    }
+
+    function renderAdminContabilita(records) {
+      let tot = 0, pag = 0, att = 0, pul = 0;
+      records.forEach(c => {
+        const t = parseFloat(c.total) || 0;
+        tot += t;
+        pul += parseInt(c.nLimpiezas) || 0;
+        if (c.estado === 'pagato' || c.stato === 'pagato') pag += t;
+        else att += t;
+      });
+
+      document.getElementById('admin-cont-totale').innerText = "€ " + tot.toFixed(2);
+      document.getElementById('admin-cont-pagato').innerText = "€ " + pag.toFixed(2);
+      document.getElementById('admin-cont-attesa').innerText = "€ " + att.toFixed(2);
+      document.getElementById('admin-cont-pulizie').innerText = pul;
+
+      const tbody = document.getElementById('tbody-admin-contabilita');
+      if (!records || records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">Nessun record contabile trovato</td></tr>';
+        return;
+      }
+
+      let html = '';
+      records.forEach(c => {
+        const isPag = (c.estado === 'pagato' || c.stato === 'pagato');
+        html += '<tr>';
+        html += '<td><strong>' + (c.nombreMes || c.mes) + ' ' + c.anno + '</strong></td>';
+        html += '<td><span class="badge badge-enc">' + (c.encargado || '-') + '</span></td>';
+        html += '<td>' + (c.nLimpiezas || 0) + '</td>';
+        html += '<td>€ ' + (c.precioPorLimpieza || 0).toFixed(2) + '</td>';
+        html += '<td>€ ' + (c.gastos || 0).toFixed(2) + '</td>';
+        html += '<td><strong style="color:var(--text); font-size:0.95rem;">€ ' + (c.total || 0).toFixed(2) + '</strong></td>';
+        html += '<td>' + (isPag ? '<span class="badge badge-success">Pagato</span>' : '<span class="badge badge-warning">In attesa</span>') + '</td>';
+        html += '<td>' + (c.fechaPago || '-') + '</td>';
+        html += '<td style="color:var(--text-muted); font-size:0.8rem;">' + (c.notas || '-') + '</td>';
+        html += '<td style="text-align:right;">';
+        html += '<button class="btn btn-sm" onclick="openModalStatoCont(\'' + c.id + '\', \'' + (c.estado||c.stato) + '\', \'' + (c.fechaPago||'') + '\', \'' + (c.notas||'') + '\')">✏️ Stato</button>';
+        html += '</td>';
+        html += '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function openModalCalcolaComp() {
+      document.getElementById('calc-result-box').style.display = 'none';
+      document.getElementById('btn-salva-calc-comp').style.display = 'none';
+      openModal('modal-calc-comp');
+    }
+
+    let ULTIMO_CALCOLO_COMP = null;
+    async function anteprimaCalcolo() {
+      const enc = document.getElementById('calc-encargado').value;
+      const mes = document.getElementById('calc-mes').value;
+      const anno = document.getElementById('calc-anno').value;
+      const tarifa = parseFloat(document.getElementById('calc-tarifa').value) || 40;
+
+      try {
+        const res = await apiCall("calcolarCompensacion", { encargado: enc, mes: mes, anno: anno, precioPorLimpieza: tarifa });
+        if (res && res.success) {
+          ULTIMO_CALCOLO_COMP = res;
+          document.getElementById('calc-count').innerText = res.nLimpiezas;
+          document.getElementById('calc-totale').innerText = "€ " + res.total.toFixed(2);
+          document.getElementById('calc-result-box').style.display = 'block';
+          document.getElementById('btn-salva-calc-comp').style.display = 'inline-flex';
+        } else {
+          toast(res.error || "Errore nel calcolo", "error");
+        }
+      } catch (err) {
+        toast("Errore di rete", "error");
+      }
+    }
+
+    async function handleExecCalcolaComp(e) {
+      e.preventDefault();
+      if (!ULTIMO_CALCOLO_COMP) return;
+      const contData = {
+        encargado: ULTIMO_CALCOLO_COMP.encargado,
+        email: ULTIMO_CALCOLO_COMP.email || "",
+        mes: ULTIMO_CALCOLO_COMP.mes,
+        anno: ULTIMO_CALCOLO_COMP.anno,
+        nLimpiezas: ULTIMO_CALCOLO_COMP.nLimpiezas,
+        precioPorLimpieza: ULTIMO_CALCOLO_COMP.precioPorLimpieza,
+        gastos: 0,
+        estado: 'pendiente',
+        notas: "Calcolato automaticamente da calendario"
+      };
+
+      try {
+        const res = await apiCall("saveContabilidad", { contData: contData });
+        if (res && res.success) {
+          closeModal('modal-calc-comp');
+          toast("Record di compenso salvato con successo!", "success");
+          loadAdminContabilita();
+        } else {
+          toast(res.error || "Errore nel salvataggio", "error");
+        }
+      } catch (err) {
+        toast("Errore di rete", "error");
+      }
+    }
+
+    function openModalStatoCont(id, estado, fecha, notas) {
+      document.getElementById('stato-cont-id').value = id;
+      document.getElementById('stato-cont-estado').value = (estado === 'pagato') ? 'pagato' : 'pendiente';
+      document.getElementById('stato-cont-fecha').value = fecha || "";
+      document.getElementById('stato-cont-notas').value = notas || "";
+      openModal('modal-stato-cont');
+    }
+
+    async function handleUpdateStatoCont(e) {
+      e.preventDefault();
+      const contId = document.getElementById('stato-cont-id').value;
+      const estado = document.getElementById('stato-cont-estado').value;
+      const fecha = document.getElementById('stato-cont-fecha').value;
+      const notas = document.getElementById('stato-cont-notas').value;
+
+      try {
+        const res = await apiCall("updateEstadoContabilidad", { contId: contId, estado: estado, fechaPago: fecha, notas: notas });
+        if (res && res.success) {
+          closeModal('modal-stato-cont');
+          toast("Stato pagamento aggiornato", "success");
+          loadAdminContabilita();
+        } else {
+          toast(res.error || "Errore aggiornamento", "error");
+        }
+      } catch (err) {
+        toast("Errore di rete", "error");
+      }
+    }
+
+    // --- Configurazione App (Admin) ---
+    async function loadAdminConfig() {
+      await loadAppConfig();
+      document.getElementById('cfg-apartamentos').value = (APP_CONFIG.apartamentos || []).join('\n');
+      document.getElementById('cfg-encargados').value = (APP_CONFIG.encargados || []).join('\n');
+    }
+
+    async function salvaConfigurazioneApp() {
+      const apts = document.getElementById('cfg-apartamentos').value.split('\n').map(s => s.trim()).filter(Boolean);
+      const encs = document.getElementById('cfg-encargados').value.split('\n').map(s => s.trim()).filter(Boolean);
+      try {
+        const res = await apiCall("saveAppConfig", { apartamentos: apts, encargados: encs });
+        if (res && res.success) {
+          toast("Configurazione salvata con successo", "success");
+          await loadAppConfig();
+        } else {
+          toast(res.error || "Errore salvataggio", "error");
+        }
+      } catch (err) {
+        toast("Errore di rete", "error");
+      }
+    }
+
+    // --- Collaboratore View Logic ---
+    async function loadCollabCalendario() {
+      const mes = document.getElementById('collab-filter-mes').value;
+      const anno = document.getElementById('collab-filter-anno').value;
+      const tbody = document.getElementById('tbody-collab-calendario');
+
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento del tuo calendario...</td></tr>';
+
+      try {
+        const res = await apiCall("getCalendario", { mes: mes, anno: anno });
+        if (res && res.success) {
+          renderCollabCalendario(res.rows || []);
+        } else {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Errore") + '</td></tr>';
+        }
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">Errore di rete</td></tr>';
+      }
+    }
+
+    function renderCollabCalendario(rows) {
+      const tbody = document.getElementById('tbody-collab-calendario');
+      document.getElementById('collab-count-badge').innerText = rows.length + " Pulizie";
+
+      if (!rows || rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Nessuna pulizia assegnata a te per questo mese</td></tr>';
+        return;
+      }
+
+      let html = '';
+      rows.forEach(r => {
+        html += '<tr>';
+        html += '<td><span class="badge badge-apt">' + (r.apartamento || '-') + '</span></td>';
+        html += '<td><strong>' + (r.fecha || '-') + '</strong></td>';
+        html += '<td>' + (r.horario || '-') + '</td>';
+        html += '<td>' + (r.preparar || '-') + '</td>';
+        html += '<td>' + (r.entrada || '-') + '</td>';
+        html += '<td>' + (r.notas || '-') + '</td>';
+        html += '<td>';
+        html += '<button class="btn btn-sm" onclick="openModalNotaEnc(\'' + r.id + '\', \'' + (r.notaEncargado || '').replace(/'/g, "\\'") + '\')">' + (r.notaEncargado ? '💬 ' + r.notaEncargado : '➕ Aggiungi nota') + '</button>';
+        html += '</td>';
+        html += '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function openModalNotaEnc(id, currentNota) {
+      document.getElementById('nota-enc-id').value = id;
+      document.getElementById('nota-enc-text').value = currentNota || "";
+      openModal('modal-nota-enc');
+    }
+
+    async function handleSaveNotaEnc(e) {
+      e.preventDefault();
+      const id = document.getElementById('nota-enc-id').value;
+      const nota = document.getElementById('nota-enc-text').value.trim();
+      const mes = document.getElementById('collab-filter-mes').value;
+      const anno = document.getElementById('collab-filter-anno').value;
+
+      try {
+        const res = await apiCall("saveNotaEncargado", { id: id, nota: nota, mes: mes, anno: anno });
+        if (res && res.success) {
+          closeModal('modal-nota-enc');
+          toast("Nota salvata con successo", "success");
+          loadCollabCalendario();
+        } else {
+          toast(res.error || "Errore salvataggio nota", "error");
+        }
+      } catch (err) {
+        toast("Errore di rete", "error");
+      }
+    }
+
+    async function loadCollabCompensi() {
+      const tbody = document.getElementById('tbody-collab-compensi');
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento compensi...</td></tr>';
+
+      try {
+        const res = await apiCall("getContabilidad");
+        if (res && res.success) {
+          renderCollabCompensi(res.data || []);
+        } else {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Errore") + '</td></tr>';
+        }
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--danger);">Errore di rete</td></tr>';
+      }
+    }
+
+    function renderCollabCompensi(records) {
+      let tot = 0, pag = 0, att = 0, pul = 0;
+      records.forEach(c => {
+        const t = parseFloat(c.total) || 0;
+        tot += t;
+        pul += parseInt(c.nLimpiezas) || 0;
+        if (c.estado === 'pagato' || c.stato === 'pagato') pag += t;
+        else att += t;
+      });
+
+      document.getElementById('collab-stat-totale').innerText = "€ " + tot.toFixed(2);
+      document.getElementById('collab-stat-pagato').innerText = "€ " + pag.toFixed(2);
+      document.getElementById('collab-stat-attesa').innerText = "€ " + att.toFixed(2);
+      document.getElementById('collab-stat-pulizie').innerText = pul;
+
+      const tbody = document.getElementById('tbody-collab-compensi');
+      if (!records || records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Nessun compenso registrato per te finora</td></tr>';
+        return;
+      }
+
+      let html = '';
+      records.forEach(c => {
+        const isPag = (c.estado === 'pagato' || c.stato === 'pagato');
+        html += '<tr>';
+        html += '<td><strong>' + (c.nombreMes || c.mes) + ' ' + c.anno + '</strong></td>';
+        html += '<td>' + (c.nLimpiezas || 0) + '</td>';
+        html += '<td>€ ' + (c.precioPorLimpieza || 0).toFixed(2) + '</td>';
+        html += '<td>€ ' + (c.gastos || 0).toFixed(2) + '</td>';
+        html += '<td><strong style="color:var(--text); font-size:0.95rem;">€ ' + (c.total || 0).toFixed(2) + '</strong></td>';
+        html += '<td>' + (isPag ? '<span class="badge badge-success">Pagato</span>' : '<span class="badge badge-warning">In attesa</span>') + '</td>';
+        html += '<td>' + (c.fechaPago || '-') + '</td>';
+        html += '<td style="color:var(--text-muted); font-size:0.8rem;">' + (c.notas || '-') + '</td>';
+        html += '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    // --- Cambio Password ---
+    async function handleCambiaPassword(e) {
+      e.preventDefault();
+      const isAdmin = SESSION.role === 'admin';
+      const oldPwd = document.getElementById(isAdmin ? 'admin-old-pwd' : 'collab-old-pwd').value;
+      const newPwd = document.getElementById(isAdmin ? 'admin-new-pwd' : 'collab-new-pwd').value;
+      const confPwd = document.getElementById(isAdmin ? 'admin-conf-pwd' : 'collab-conf-pwd').value;
+
+      if (newPwd !== confPwd) {
+        toast("Le nuove password non coincidono", "error");
+        return;
+      }
+
+      try {
+        const res = await apiCall("cambiarPassword", { oldPassword: oldPwd, newPassword: newPwd });
+        if (res && res.success) {
+          toast("Password cambiata con successo!", "success");
+          e.target.reset();
+        } else {
+          toast(res.error || "Errore cambio password", "error");
+        }
+      } catch (err) {
+        toast("Errore di rete", "error");
+      }
+    }
+  </script>
+</body>
+</html>
