@@ -1,5 +1,5 @@
-// Calendario Pulizie - Service Worker v3
-const CACHE_NAME = 'pulizie-v3-cache';
+// Calendario Pulizie - Service Worker v4 (Fix CORS & Redirects)
+const CACHE_NAME = 'pulizie-v4-cache';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -33,13 +33,14 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Per le chiamate API a Google Apps Script usa sempre la rete
-  if (url.hostname.includes('script.google.com') || url.hostname.includes('script.googleusercontent.com')) {
-    event.respondWith(fetch(event.request));
+  // IMPORTANTE: Le chiamate a Google Apps Script non devono MAI essere intercettate con event.respondWith!
+  // Lasciando uscire la funzione senza chiamare respondWith, il browser gestisce la richiesta
+  // nativamente tramite la rete, seguendo i redirect 302 e CORS senza blocchi.
+  if (url.hostname.includes('google.com') || url.hostname.includes('googleusercontent.com')) {
     return;
   }
 
-  // Per i file statici: cache first con fallback su rete
+  // Per i file statici locali: cache first con fallback su rete
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) return cachedResponse;

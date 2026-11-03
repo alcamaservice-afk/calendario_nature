@@ -1119,19 +1119,46 @@
     async function apiCall(action, payload = {}) {
       setSyncing(true);
       const bodyData = Object.assign({ action: action, token: SESSION.token }, payload);
+      
+      // Tentativo 1: POST
       try {
         const response = await fetch(SCRIPT_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(bodyData)
+          body: JSON.stringify(bodyData),
+          redirect: 'follow'
         });
         const json = await response.json();
         setSyncing(false);
         return json;
-      } catch (err) {
-        setSyncing(false);
-        console.error("API error (" + action + "):", err);
-        throw err;
+      } catch (postErr) {
+        console.warn("POST apiCall fallito, tentativo di fallback con GET...", postErr);
+        
+        // Tentativo 2: GET Fallback (risolve problemi di CORS redirect nei Service Worker dei browser)
+        try {
+          const params = new URLSearchParams();
+          params.append('action', action);
+          if (SESSION.token) params.append('token', SESSION.token);
+          for (const k in payload) {
+            if (typeof payload[k] === 'object' && payload[k] !== null) {
+              params.append(k, JSON.stringify(payload[k]));
+            } else if (payload[k] !== undefined && payload[k] !== null) {
+              params.append(k, payload[k]);
+            }
+          }
+          const getUrl = SCRIPT_URL + (SCRIPT_URL.includes('?') ? '&' : '?') + params.toString();
+          const response = await fetch(getUrl, {
+            method: 'GET',
+            redirect: 'follow'
+          });
+          const json = await response.json();
+          setSyncing(false);
+          return json;
+        } catch (getErr) {
+          setSyncing(false);
+          console.error("API error definitivo (" + action + "):", getErr);
+          throw getErr;
+        }
       }
     }
 
