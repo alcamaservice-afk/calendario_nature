@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Calendario Pulizie</title>
+  <title>Calendario de Limpiezas</title>
   
   <!-- PWA & Mobile Meta Tags -->
   <meta name="theme-color" content="#0f172a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Pulizie">
+  <meta name="apple-mobile-web-app-title" content="Limpiezas">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
@@ -44,9 +44,8 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; }
     body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
 
-    /* Top Bar */
     header {
-      background: rgba(30, 41, 59, 0.85);
+      background: rgba(30, 41, 59, 0.9);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--surface-border);
       position: sticky;
@@ -122,7 +121,6 @@
       cursor: pointer;
     }
 
-    /* Container */
     main { flex: 1; padding: 20px; max-width: 1280px; margin: 0 auto; width: 100%; }
 
     /* Nav Tabs */
@@ -159,11 +157,9 @@
       box-shadow: 0 2px 10px var(--primary-glow);
     }
 
-    /* Views */
     .view-section { display: none; animation: fadeIn 0.25s ease-out forwards; }
     .view-section.active { display: block; }
 
-    /* Cards */
     .card {
       background: var(--surface);
       border: 1px solid var(--surface-border);
@@ -184,7 +180,7 @@
     /* Summary Grid */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
@@ -198,7 +194,7 @@
       gap: 6px;
     }
     .stat-label { font-size: 0.78rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--text); }
+    .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text); }
     .stat-value.primary { color: var(--primary); }
     .stat-value.success { color: var(--success); }
     .stat-value.warning { color: var(--warning); }
@@ -219,7 +215,7 @@
     .filter-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .filter-label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); }
 
-    /* Forms & Inputs */
+    /* Inputs */
     select, input[type="text"], input[type="email"], input[type="password"], input[type="date"], input[type="number"], textarea {
       background: #0f172a;
       border: 1px solid var(--surface-border);
@@ -332,7 +328,7 @@
       border: 1px solid var(--surface-border);
       border-radius: 16px;
       padding: 24px;
-      max-width: 500px;
+      max-width: 550px;
       width: 100%;
       max-height: 90vh;
       overflow-y: auto;
@@ -352,6 +348,40 @@
       font-size: 1.4rem;
       cursor: pointer;
     }
+
+    /* Checkbox list for permissions */
+    .perm-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      background: #0f172a;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid var(--surface-border);
+      margin-bottom: 16px;
+    }
+    .perm-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.84rem;
+      cursor: pointer;
+    }
+    .perm-item input { cursor: pointer; accent-color: var(--primary); }
+
+    /* Notification popup items */
+    .notif-item {
+      background: #0f172a;
+      border-left: 4px solid var(--primary);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .notif-msg { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+    .notif-time { font-size: 0.76rem; color: var(--text-muted); }
 
     /* Toast */
     #toast-container {
@@ -381,17 +411,35 @@
     .toast.error { border-left: 4px solid var(--danger); }
     .toast.info { border-left: 4px solid var(--primary); }
 
-    /* Animations */
+    /* Printable Report Styling */
+    @media print {
+      body * { visibility: hidden; }
+      #printable-report, #printable-report * { visibility: visible; }
+      #printable-report {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white !important;
+        color: black !important;
+        padding: 20px;
+        font-size: 11pt;
+      }
+      #printable-report table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+      #printable-report th, #printable-report td { border: 1px solid #ddd; padding: 6px 10px; color: black !important; }
+      #printable-report th { background: #f1f5f9 !important; font-weight: bold; }
+    }
+
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-    /* Responsive */
     @media (max-width: 768px) {
       header { padding: 10px 14px; }
       main { padding: 12px; }
       .brand-title { font-size: 1rem; }
       .tab-btn { padding: 8px 12px; font-size: 0.8rem; }
+      .perm-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -401,10 +449,10 @@
   <div id="pwa-install-banner">
     <div style="display:flex; align-items:center; gap:10px;">
       <span>🧹</span>
-      <span id="pwa-prompt-text">Installa l'App Calendario Pulizie sulla tua schermata home</span>
+      <span id="pwa-prompt-text">Instala la App Calendario de Limpiezas en tu pantalla de inicio</span>
     </div>
     <div style="display:flex; align-items:center; gap:8px;">
-      <button id="btn-install-pwa">Installa</button>
+      <button id="btn-install-pwa">Instalar</button>
       <button style="background:transparent; color:white; padding:4px;" onclick="dismissPwaBanner()">✕</button>
     </div>
   </div>
@@ -416,16 +464,16 @@
         <svg viewBox="0 0 24 24"><path d="M19.36 2.72l1.42 1.42-3.88 3.88-1.42-1.42 3.88-3.88m-5.88 5.88l1.42 1.42-7.07 7.07c-.39.39-1.02.39-1.41 0l-1.42-1.42c-.39-.39-.39-1.02 0-1.41l7.07-7.07m-5.65 9.9l1.41 1.41-1.41 1.42c-.78.78-2.05.78-2.83 0s-.78-2.05 0-2.83l1.41-1.41z"/></svg>
       </div>
       <div>
-        <div class="brand-title">Calendario Pulizie</div>
+        <div class="brand-title">Calendario de Limpiezas</div>
       </div>
     </a>
     <div class="header-actions">
       <div class="user-pill" id="user-status-pill" style="display:none;">
         <span class="status-dot" id="sync-dot"></span>
-        <span id="header-user-name">Utente</span>
+        <span id="header-user-name">Usuario</span>
         <span class="badge badge-apt" id="header-user-role" style="font-size:0.7rem; padding:2px 6px;">Admin</span>
       </div>
-      <button class="btn btn-sm btn-danger" id="btn-logout" style="display:none;" onclick="appLogout()">Esci</button>
+      <button class="btn btn-sm btn-danger" id="btn-logout" style="display:none;" onclick="appLogout()">Cerrar Sesión</button>
     </div>
   </header>
 
@@ -439,25 +487,29 @@
           <div class="login-logo">
             <svg viewBox="0 0 24 24"><path d="M19.36 2.72l1.42 1.42-3.88 3.88-1.42-1.42 3.88-3.88m-5.88 5.88l1.42 1.42-7.07 7.07c-.39.39-1.02.39-1.41 0l-1.42-1.42c-.39-.39-.39-1.02 0-1.41l7.07-7.07m-5.65 9.9l1.41 1.41-1.41 1.42c-.78.78-2.05.78-2.83 0s-.78-2.05 0-2.83l1.41-1.41z"/></svg>
           </div>
-          <h2 style="font-size: 1.4rem; font-weight:700; margin-bottom:6px;">Bentornato</h2>
-          <p style="color:var(--text-muted); font-size:0.86rem; margin-bottom:24px;">Accedi al tuo account per gestire pulizie e contabilità</p>
+          <h2 style="font-size: 1.4rem; font-weight:700; margin-bottom:6px;">Bienvenido</h2>
+          <p style="color:var(--text-muted); font-size:0.86rem; margin-bottom:24px;">Accede para gestionar limpiezas y contabilidad</p>
 
           <form id="form-login" onsubmit="handleLoginSubmit(event)">
             <div class="form-group" style="text-align:left;">
-              <label>Email</label>
-              <input type="email" id="login-email" required placeholder="tua@email.com">
+              <label>Correo Electrónico</label>
+              <input type="email" id="login-email" required placeholder="tu@correo.com" autocomplete="username">
             </div>
-            <div class="form-group" style="text-align:left; margin-bottom:24px;">
-              <label>Password</label>
-              <input type="password" id="login-password" required placeholder="••••••••">
+            <div class="form-group" style="text-align:left; margin-bottom:16px;">
+              <label>Contraseña</label>
+              <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:22px; text-align:left;">
+              <input type="checkbox" id="login-remember" checked style="accent-color:var(--primary); cursor:pointer;">
+              <label for="login-remember" style="font-size:0.84rem; color:var(--text-muted); cursor:pointer;">Recordar mis datos y contraseña</label>
             </div>
             <button type="submit" class="btn btn-primary" id="btn-login-submit" style="width:100%; padding:12px; font-size:0.95rem;">
-              Accedi
+              Iniciar Sesión
             </button>
           </form>
 
           <div style="margin-top:20px; font-size:0.78rem; color:var(--text-muted);">
-            <a href="#" onclick="openModal('modal-script-url')" style="color:var(--text-muted); text-decoration:none;">⚙️ Impostazioni Connessione</a>
+            <a href="#" onclick="openModal('modal-script-url')" style="color:var(--text-muted); text-decoration:none;">⚙️ Configuración de Conexión</a>
           </div>
         </div>
       </div>
@@ -466,42 +518,42 @@
     <!-- ==================== VIEW: ADMIN ==================== -->
     <div id="view-admin" class="view-section">
       <div class="tabs-nav">
-        <button class="tab-btn active" onclick="switchAdminTab('calendario')">📅 Calendario</button>
-        <button class="tab-btn" onclick="switchAdminTab('collaboratori')">👥 Collaboratori</button>
-        <button class="tab-btn" onclick="switchAdminTab('contabilita')">💰 Contabilità</button>
-        <button class="tab-btn" onclick="switchAdminTab('configurazione')">⚙️ Configurazione</button>
-        <button class="tab-btn" onclick="switchAdminTab('profilo')">👤 Profilo</button>
+        <button class="tab-btn active" onclick="switchAdminTab('calendario', this)">📅 Calendario</button>
+        <button class="tab-btn" onclick="switchAdminTab('collaboratori', this)">👥 Colaboradores</button>
+        <button class="tab-btn" onclick="switchAdminTab('contabilita', this)">💰 Contabilidad</button>
+        <button class="tab-btn" onclick="switchAdminTab('configurazione', this)">🏢 Configuración</button>
+        <button class="tab-btn" onclick="switchAdminTab('profilo', this)">👤 Mi Perfil</button>
       </div>
 
       <!-- Tab Admin: Calendario -->
       <div id="admin-tab-calendario" class="admin-subview">
         <div class="filter-bar">
           <div class="filter-group">
-            <span class="filter-label">Mese:</span>
+            <span class="filter-label">Mes:</span>
             <select id="admin-filter-mes" onchange="loadAdminCalendario()">
-              <option value="1">Gennaio</option><option value="2">Febbraio</option><option value="3">Marzo</option>
-              <option value="4">Aprile</option><option value="5">Maggio</option><option value="6">Giugno</option>
-              <option value="7">Luglio</option><option value="8">Agosto</option><option value="9">Settembre</option>
-              <option value="10">Ottobre</option><option value="11">Novembre</option><option value="12">Dicembre</option>
+              <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+              <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+              <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+              <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
             </select>
             <select id="admin-filter-anno" onchange="loadAdminCalendario()">
               <option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option>
             </select>
           </div>
           <div class="filter-group">
-            <span class="filter-label">Collaboratore:</span>
+            <span class="filter-label">Colaborador:</span>
             <select id="admin-filter-enc" onchange="loadAdminCalendario()">
-              <option value="">Tutti</option>
+              <option value="">Todos</option>
             </select>
           </div>
           <div class="filter-group">
-            <span class="filter-label">Appartamento:</span>
+            <span class="filter-label">Apartamento:</span>
             <select id="admin-filter-apt" onchange="loadAdminCalendario()">
-              <option value="">Tutti</option>
+              <option value="">Todos</option>
             </select>
           </div>
           <div style="margin-left:auto;">
-            <button class="btn btn-primary" onclick="openModalAddRiga()">➕ Nuova Pulizia</button>
+            <button class="btn btn-primary" onclick="openModalAddRiga()">➕ Nueva Limpieza</button>
           </div>
         </div>
 
@@ -510,32 +562,32 @@
             <table id="table-admin-calendario">
               <thead>
                 <tr>
-                  <th>Appartamento</th>
-                  <th>Data Pulizia</th>
-                  <th>Orario</th>
-                  <th>Preparare Per</th>
-                  <th>Entrata Prossimi</th>
-                  <th>Note Admin</th>
-                  <th>Incaricato/a</th>
-                  <th>Note Incaricato</th>
-                  <th style="text-align:right;">Azioni</th>
+                  <th>Apartamento</th>
+                  <th>Fecha Limpieza</th>
+                  <th>Horario</th>
+                  <th>Preparar Para</th>
+                  <th>Próxima Entrada</th>
+                  <th>Notas Admin</th>
+                  <th>Encargado/a</th>
+                  <th>Notas Encargado</th>
+                  <th style="text-align:right;">Acciones</th>
                 </tr>
               </thead>
               <tbody id="tbody-admin-calendario">
-                <tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento dati...</td></tr>
+                <tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando calendario...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- Tab Admin: Collaboratori -->
+      <!-- Tab Admin: Colaboradores -->
       <div id="admin-tab-collaboratori" class="admin-subview" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-          <h3 style="font-size:1.1rem; font-weight:700;">Gestione Account Collaboratori</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+          <h3 style="font-size:1.1rem; font-weight:700;">Gestión de Cuentas y Permisos</h3>
           <div style="display:flex; gap:8px;">
-            <button class="btn btn-secondary" onclick="sincronizzaCollaboratoriEsistenti()">🔄 Sincronizza Esistenti</button>
-            <button class="btn btn-primary" onclick="openModalAddUser()">➕ Nuovo Collaboratore</button>
+            <button class="btn btn-secondary" onclick="sincronizzaCollaboratoriEsistenti()">🔄 Sincronizar Existentes</button>
+            <button class="btn btn-primary" onclick="openModalAddUser()">➕ Nuevo Colaborador</button>
           </div>
         </div>
 
@@ -544,132 +596,193 @@
             <table>
               <thead>
                 <tr>
-                  <th>Nome</th>
-                  <th>Email</th>
-                  <th>Incaricato Key</th>
-                  <th>Ruolo</th>
-                  <th>Stato</th>
-                  <th>Ultimo Accesso</th>
-                  <th style="text-align:right;">Azioni</th>
+                  <th>Nombre</th>
+                  <th>Correo</th>
+                  <th>Encargado Key</th>
+                  <th>Tarifa/Limp</th>
+                  <th>Estado</th>
+                  <th>Último Acceso</th>
+                  <th style="text-align:right;">Acciones</th>
                 </tr>
               </thead>
               <tbody id="tbody-admin-utenti">
-                <tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento collaboratori...</td></tr>
+                <tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando colaboradores...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- Tab Admin: Contabilità -->
+      <!-- Tab Admin: Contabilidad -->
       <div id="admin-tab-contabilita" class="admin-subview" style="display:none;">
         <div class="stats-grid">
           <div class="stat-card">
-            <span class="stat-label">Totale Compensi</span>
+            <span class="stat-label">Total Devengado</span>
             <span class="stat-value blue" id="admin-cont-totale">€ 0.00</span>
           </div>
           <div class="stat-card">
-            <span class="stat-label">Già Pagato</span>
+            <span class="stat-label">Total Pagado</span>
             <span class="stat-value success" id="admin-cont-pagato">€ 0.00</span>
           </div>
           <div class="stat-card">
-            <span class="stat-label">In Attesa</span>
+            <span class="stat-label">Pendiente de Pago</span>
             <span class="stat-value warning" id="admin-cont-attesa">€ 0.00</span>
           </div>
           <div class="stat-card">
-            <span class="stat-label">Totale Pulizie</span>
+            <span class="stat-label">Total Limpiezas</span>
             <span class="stat-value primary" id="admin-cont-pulizie">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Gastos Aprobados</span>
+            <span class="stat-value" id="admin-cont-gastos" style="color:#a78bfa;">€ 0.00</span>
           </div>
         </div>
 
+        <!-- Filtros Contabilidad Completa -->
         <div class="filter-bar">
           <div class="filter-group">
-            <span class="filter-label">Mese:</span>
+            <span class="filter-label">Colaborador:</span>
+            <select id="admin-cont-filter-enc" onchange="loadAdminContabilita()">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Apartamento:</span>
+            <select id="admin-cont-filter-apt" onchange="loadAdminContabilita()">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label">Mes:</span>
             <select id="admin-cont-filter-mes" onchange="loadAdminContabilita()">
-              <option value="">Tutti i mesi</option>
-              <option value="1">Gennaio</option><option value="2">Febbraio</option><option value="3">Marzo</option>
-              <option value="4">Aprile</option><option value="5">Maggio</option><option value="6">Giugno</option>
-              <option value="7">Luglio</option><option value="8">Agosto</option><option value="9">Settembre</option>
-              <option value="10">Ottobre</option><option value="11">Novembre</option><option value="12">Dicembre</option>
+              <option value="">Todos los meses</option>
+              <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+              <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+              <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+              <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
             </select>
             <select id="admin-cont-filter-anno" onchange="loadAdminContabilita()">
+              <option value="">Todos los años</option>
               <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
             </select>
           </div>
           <div class="filter-group">
-            <span class="filter-label">Collaboratore:</span>
-            <select id="admin-cont-filter-enc" onchange="loadAdminContabilita()">
-              <option value="">Tutti</option>
+            <span class="filter-label">Estado:</span>
+            <select id="admin-cont-filter-est" onchange="loadAdminContabilita()">
+              <option value="">Todos</option>
+              <option value="pendiente">Solo Pendientes</option>
+              <option value="pagado">Solo Pagados</option>
             </select>
           </div>
           <div style="margin-left:auto; display:flex; gap:8px;">
-            <button class="btn btn-primary" onclick="openModalCalcolaComp()">⚡ Calcola da Calendario</button>
-            <button class="btn btn-secondary" onclick="openModalAddCont()">➕ Aggiungi Record</button>
+            <button class="btn btn-secondary" onclick="exportarContabilidadPDF()">📄 Exportar PDF / Imprimir</button>
           </div>
         </div>
 
+        <!-- Tabla Libro de Contabilidad -->
         <div class="card">
+          <div class="card-title">
+            <span>Libro de Liquidaciones y Pagos</span>
+            <span style="font-size:0.8rem; font-weight:normal; color:var(--text-muted);">Cálculo automático en base a limpiezas y gastos aprobados</span>
+          </div>
           <div class="table-container">
             <table>
               <thead>
                 <tr>
                   <th>Periodo</th>
-                  <th>Collaboratore</th>
-                  <th>N. Pulizie</th>
-                  <th>Prezzo/cad</th>
-                  <th>Spese Extra</th>
-                  <th>Totale</th>
-                  <th>Stato</th>
-                  <th>Data Pagamento</th>
-                  <th>Note</th>
-                  <th style="text-align:right;">Azioni</th>
+                  <th>Apartamento</th>
+                  <th>Colaborador</th>
+                  <th>N. Limpiezas</th>
+                  <th>Tarifa/u</th>
+                  <th>Gastos Aprobados</th>
+                  <th>Total (€)</th>
+                  <th>Estado</th>
+                  <th>Fecha Pago</th>
+                  <th>Notas</th>
+                  <th style="text-align:right;">Acciones</th>
                 </tr>
               </thead>
               <tbody id="tbody-admin-contabilita">
-                <tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento contabilità...</td></tr>
+                <tr><td colspan="11" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando contabilidad...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tabla Gastos Enviados por Colaboradores -->
+        <div class="card">
+          <div class="card-title">
+            <span>Gastos Presentados por Colaboradores</span>
+            <button class="btn btn-sm btn-primary" onclick="openModalAddGastoAdmin()">➕ Añadir Gasto</button>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Colaborador</th>
+                  <th>Periodo</th>
+                  <th>Concepto</th>
+                  <th>Importe</th>
+                  <th>Estado</th>
+                  <th style="text-align:right;">Aprobación / Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-admin-gastos">
+                <tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando gastos...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- Tab Admin: Configurazione -->
+      <!-- Tab Admin: Configuración -->
       <div id="admin-tab-configurazione" class="admin-subview" style="display:none;">
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
           <div class="card">
-            <div class="card-title">🏢 Appartamenti Gestiti</div>
-            <p style="color:var(--text-muted); font-size:0.84rem; margin-bottom:12px;">Un appartamento per riga</p>
+            <div class="card-title">🏢 Apartamentos Gestionados</div>
+            <p style="color:var(--text-muted); font-size:0.84rem; margin-bottom:12px;">Un apartamento por línea</p>
             <textarea id="cfg-apartamentos" rows="8" style="width:100%; margin-bottom:14px;"></textarea>
-            <button class="btn btn-primary" onclick="salvaConfigurazioneApp()">Salva Appartamenti</button>
+            <button class="btn btn-primary" onclick="salvaConfigurazioneApp()">Guardar Apartamentos</button>
           </div>
 
           <div class="card">
-            <div class="card-title">👥 Nomi Incaricati</div>
-            <p style="color:var(--text-muted); font-size:0.84rem; margin-bottom:12px;">Un incaricato per riga (es: DANIELA, LINA)</p>
+            <div class="card-title">👥 Nombres de Encargados</div>
+            <p style="color:var(--text-muted); font-size:0.84rem; margin-bottom:12px;">Un encargado por línea (ej: DANIELA, LINA)</p>
             <textarea id="cfg-encargados" rows="8" style="width:100%; margin-bottom:14px;"></textarea>
-            <button class="btn btn-primary" onclick="salvaConfigurazioneApp()">Salva Incaricati</button>
+            <button class="btn btn-primary" onclick="salvaConfigurazioneApp()">Guardar Encargados</button>
           </div>
         </div>
       </div>
 
       <!-- Tab Admin: Profilo -->
       <div id="admin-tab-profilo" class="admin-subview" style="display:none;">
-        <div class="card" style="max-width:500px; margin:0 auto;">
-          <div class="card-title">👤 Profilo Amministratore</div>
-          <form onsubmit="handleCambiaPassword(event)">
+        <div class="card" style="max-width:550px; margin:0 auto;">
+          <div class="card-title">👤 Perfil del Administrador</div>
+          <form onsubmit="handleAdminProfileUpdate(event)">
             <div class="form-group">
-              <label>Vecchia Password</label>
-              <input type="password" id="admin-old-pwd" required>
+              <label>Nombre de Administrador</label>
+              <input type="text" id="admin-prof-nombre" required>
             </div>
             <div class="form-group">
-              <label>Nuova Password</label>
-              <input type="password" id="admin-new-pwd" required minlength="6">
+              <label>Correo Electrónico de Administrador</label>
+              <input type="email" id="admin-prof-email" required>
+            </div>
+            <hr style="border:none; border-top:1px solid var(--surface-border); margin:20px 0;">
+            <h4 style="font-size:0.95rem; margin-bottom:12px; color:var(--primary);">Cambiar Contraseña (opcional)</h4>
+            <div class="form-group">
+              <label>Contraseña Actual (requerida para cambiar contraseña)</label>
+              <input type="password" id="admin-old-pwd" placeholder="Ingresa tu contraseña actual">
+            </div>
+            <div class="form-group">
+              <label>Nueva Contraseña</label>
+              <input type="password" id="admin-new-pwd" minlength="6" placeholder="Mínimo 6 caracteres">
             </div>
             <div class="form-group" style="margin-bottom:20px;">
-              <label>Conferma Nuova Password</label>
-              <input type="password" id="admin-conf-pwd" required minlength="6">
+              <label>Confirmar Nueva Contraseña</label>
+              <input type="password" id="admin-conf-pwd" minlength="6" placeholder="Repite la nueva contraseña">
             </div>
-            <button type="submit" class="btn btn-primary" style="width:100%;">Aggiorna Password</button>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Guardar Cambios de Perfil</button>
           </form>
         </div>
       </div>
@@ -678,92 +791,91 @@
     <!-- ==================== VIEW: COLLABORATORE ==================== -->
     <div id="view-collaborator" class="view-section">
       <div class="tabs-nav">
-        <button class="tab-btn active" onclick="switchCollabTab('calendario')">📅 Il Mio Calendario</button>
-        <button class="tab-btn" onclick="switchCollabTab('compensi')">💰 I Miei Compensi</button>
-        <button class="tab-btn" onclick="switchCollabTab('profilo')">👤 Profilo</button>
+        <button class="tab-btn active" onclick="switchCollabTab('calendario', this)">📅 Mi Calendario</button>
+        <button class="tab-btn" id="collab-tab-btn-compensi" onclick="switchCollabTab('compensi', this)">💰 Mis Pagos y Gastos</button>
+        <button class="tab-btn" onclick="switchCollabTab('profilo', this)">👤 Mi Perfil</button>
       </div>
 
       <!-- Tab Collab: Calendario Personale -->
       <div id="collab-tab-calendario" class="collab-subview">
         <div class="filter-bar">
           <div class="filter-group">
-            <span class="filter-label">Mese:</span>
+            <span class="filter-label">Mes:</span>
             <select id="collab-filter-mes" onchange="loadCollabCalendario()">
-              <option value="1">Gennaio</option><option value="2">Febbraio</option><option value="3">Marzo</option>
-              <option value="4">Aprile</option><option value="5">Maggio</option><option value="6">Giugno</option>
-              <option value="7">Luglio</option><option value="8">Agosto</option><option value="9">Settembre</option>
-              <option value="10">Ottobre</option><option value="11">Novembre</option><option value="12">Dicembre</option>
+              <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+              <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+              <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+              <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
             </select>
             <select id="collab-filter-anno" onchange="loadCollabCalendario()">
               <option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option>
             </select>
           </div>
           <div style="margin-left:auto;">
-            <span class="badge badge-enc" id="collab-count-badge">0 Pulizie</span>
+            <span class="badge badge-enc" id="collab-count-badge">0 Limpiezas</span>
           </div>
         </div>
 
         <div class="card">
           <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Appartamento</th>
-                  <th>Data Pulizia</th>
-                  <th>Orario</th>
-                  <th>Preparare Per</th>
-                  <th>Entrata Prossimi</th>
-                  <th>Note Admin</th>
-                  <th>La Mia Nota</th>
-                </tr>
+            <table id="table-collab-calendario">
+              <thead id="thead-collab-calendario">
+                <!-- Se genera dinámicamente según permisos -->
               </thead>
               <tbody id="tbody-collab-calendario">
-                <tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento del tuo calendario...</td></tr>
+                <tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando tu calendario...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- Tab Collab: Compensi Personali -->
+      <!-- Tab Collab: Compensi e Gastos -->
       <div id="collab-tab-compensi" class="collab-subview" style="display:none;">
         <div class="stats-grid">
           <div class="stat-card">
-            <span class="stat-label">Pulizie Totali</span>
+            <span class="stat-label">Limpiezas del Mes</span>
             <span class="stat-value primary" id="collab-stat-pulizie">0</span>
           </div>
           <div class="stat-card">
-            <span class="stat-label">Compenso Totale</span>
+            <span class="stat-label">Total Limpiezas (€)</span>
             <span class="stat-value blue" id="collab-stat-totale">€ 0.00</span>
           </div>
           <div class="stat-card">
-            <span class="stat-label">Già Saldato</span>
-            <span class="stat-value success" id="collab-stat-pagato">€ 0.00</span>
+            <span class="stat-label">Gastos Aprobados (€)</span>
+            <span class="stat-value" id="collab-stat-gastos" style="color:#a78bfa;">€ 0.00</span>
           </div>
           <div class="stat-card">
-            <span class="stat-label">In Attesa</span>
-            <span class="stat-value warning" id="collab-stat-attesa">€ 0.00</span>
+            <span class="stat-label">Total Liquidación</span>
+            <span class="stat-value" id="collab-stat-liquidazione" style="color:#38bdf8;">€ 0.00</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Estado de Pago</span>
+            <span class="stat-value" id="collab-stat-estado" style="font-size:1.15rem; margin-top:4px;">🟡 Pendiente</span>
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-title">Storico Compensi e Pagamenti</div>
+        <!-- Sección de Gastos -->
+        <div class="card" id="collab-gastos-section">
+          <div class="card-title">
+            <span>📦 Mis Gastos de este Mes</span>
+            <button class="btn btn-sm btn-primary" id="btn-collab-add-gasto" onclick="openModalAddGastoCollab()">➕ Añadir Gasto</button>
+          </div>
+          <p id="collab-mes-cerrado-msg" style="display:none; color:var(--warning); font-size:0.86rem; margin-bottom:14px; background:rgba(245,158,11,0.1); padding:10px; border-radius:8px;">
+            🔒 Este mes ya ha sido liquidado y pagado por el administrador. No se pueden añadir nuevos gastos.
+          </p>
           <div class="table-container">
             <table>
               <thead>
                 <tr>
-                  <th>Periodo</th>
-                  <th>N. Pulizie</th>
-                  <th>Tariffa</th>
-                  <th>Spese Extra</th>
-                  <th>Totale</th>
-                  <th>Stato</th>
-                  <th>Data Pagamento</th>
-                  <th>Note</th>
+                  <th>Fecha</th>
+                  <th>Concepto</th>
+                  <th>Importe (€)</th>
+                  <th>Estado</th>
                 </tr>
               </thead>
-              <tbody id="tbody-collab-compensi">
-                <tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento compensi...</td></tr>
+              <tbody id="tbody-collab-gastos">
+                <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">No has registrado gastos para este mes</td></tr>
               </tbody>
             </table>
           </div>
@@ -773,28 +885,24 @@
       <!-- Tab Collab: Profilo -->
       <div id="collab-tab-profilo" class="collab-subview" style="display:none;">
         <div class="card" style="max-width:500px; margin:0 auto;">
-          <div class="card-title">👤 Il Mio Profilo</div>
-          <div style="margin-bottom:20px; font-size:0.9rem; line-height:1.6;">
-            <div><strong>Nome:</strong> <span id="collab-info-nome">-</span></div>
-            <div><strong>Email:</strong> <span id="collab-info-email">-</span></div>
-            <div><strong>Incaricato:</strong> <span class="badge badge-enc" id="collab-info-enc">-</span></div>
+          <div class="card-title">👤 Mi Perfil de Colaborador</div>
+          <div style="margin-bottom:20px; font-size:0.9rem; line-height:1.8;">
+            <div><strong>Nombre:</strong> <span id="collab-info-nombre">-</span></div>
+            <div><strong>Encargado Asignado:</strong> <span class="badge badge-enc" id="collab-info-enc">-</span></div>
+            <div><strong>Tarifa por Limpieza:</strong> <span style="color:var(--primary); font-weight:bold;" id="collab-info-tarifa">€ 40.00</span></div>
           </div>
           <hr style="border:none; border-top:1px solid var(--surface-border); margin-bottom:20px;">
-          <h4 style="font-size:0.95rem; margin-bottom:12px;">Cambia Password</h4>
-          <form onsubmit="handleCambiaPassword(event)">
-            <div class="form-group">
-              <label>Vecchia Password</label>
-              <input type="password" id="collab-old-pwd" required>
-            </div>
-            <div class="form-group">
-              <label>Nuova Password</label>
-              <input type="password" id="collab-new-pwd" required minlength="6">
-            </div>
+          
+          <h4 style="font-size:0.95rem; margin-bottom:6px;">Actualizar Correo Electrónico</h4>
+          <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom:14px;">
+            Si cambias tu correo, se actualizará automáticamente y recibirás un mensaje con tu contraseña de acceso.
+          </p>
+          <form onsubmit="handleCollabEmailUpdate(event)">
             <div class="form-group" style="margin-bottom:20px;">
-              <label>Conferma Nuova Password</label>
-              <input type="password" id="collab-conf-pwd" required minlength="6">
+              <label>Nuevo Correo Electrónico</label>
+              <input type="email" id="collab-new-email" required placeholder="nuevo@correo.com">
             </div>
-            <button type="submit" class="btn btn-primary" style="width:100%;">Aggiorna Password</button>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Actualizar Mi Correo</button>
           </form>
         </div>
       </div>
@@ -804,46 +912,148 @@
 
   <!-- ==================== MODALS ==================== -->
 
+  <!-- Modal: Ficha / Permisos Colaborador (Admin) -->
+  <div class="modal-overlay" id="modal-collab-ficha">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">⚙️ Ficha y Permisos de Colaborador</div>
+        <button class="modal-close" onclick="closeModal('modal-collab-ficha')">✕</button>
+      </div>
+      <form onsubmit="handleSaveFichaSubmit(event)">
+        <input type="hidden" id="ficha-orig-email">
+        <div class="form-group">
+          <label>Nombre Completo</label>
+          <input type="text" id="ficha-nombre" required>
+        </div>
+        <div class="form-group">
+          <label>Correo Electrónico</label>
+          <input type="email" id="ficha-email" required>
+        </div>
+        <div class="form-group">
+          <label>Clave de Encargado/a (en Calendario)</label>
+          <input type="text" id="ficha-enckey" required style="text-transform:uppercase;">
+        </div>
+        <div class="form-group">
+          <label>Tarifa por Limpieza (€)</label>
+          <input type="number" step="0.5" id="ficha-tarifa" required>
+        </div>
+
+        <h4 style="font-size:0.9rem; margin:16px 0 10px 0; color:var(--primary);">Permisos de Visualización del Colaborador</h4>
+        <div class="perm-grid">
+          <label class="perm-item"><input type="checkbox" id="perm-horario"> Ver Horario</label>
+          <label class="perm-item"><input type="checkbox" id="perm-preparar"> Ver Preparar Para</label>
+          <label class="perm-item"><input type="checkbox" id="perm-entrada"> Ver Próxima Entrada</label>
+          <label class="perm-item"><input type="checkbox" id="perm-notas-admin"> Ver Notas Admin</label>
+          <label class="perm-item"><input type="checkbox" id="perm-dias-libres"> Ver Días Libres</label>
+          <label class="perm-item"><input type="checkbox" id="perm-plataforma"> Ver Plataforma</label>
+          <label class="perm-item"><input type="checkbox" id="perm-contabilidad"> Ver Contabilidad</label>
+          <label class="perm-item"><input type="checkbox" id="perm-gastos"> Permitir Añadir Gastos</label>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:10px;">
+          <button type="button" class="btn btn-sm" onclick="openResetPasswordFromFicha()">🔑 Cambiar Contraseña</button>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn" onclick="closeModal('modal-collab-ficha')">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Guardar Ficha</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Novedades / Notificaciones Popup (Colaborador) -->
+  <div class="modal-overlay" id="modal-notificaciones">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" style="color:var(--primary);">🔔 Novedades en tu Calendario</div>
+        <button class="modal-close" onclick="closeModalNotificaciones()">✕</button>
+      </div>
+      <p style="color:var(--text-muted); font-size:0.86rem; margin-bottom:16px;">
+        El administrador ha realizado cambios o añadido notas en tus limpiezas:
+      </p>
+      <div id="notif-list-container" style="max-height:300px; overflow-y:auto; margin-bottom:20px;">
+        <!-- Se llena con notificaciones -->
+      </div>
+      <div style="text-align:right;">
+        <button type="button" class="btn btn-primary" onclick="closeModalNotificaciones()" style="width:100%;">
+          Entendido / Marcar como leídos
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Añadir Gasto (Colaborador o Admin) -->
+  <div class="modal-overlay" id="modal-add-gasto">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-gasto-title">Añadir Gasto del Mes</div>
+        <button class="modal-close" onclick="closeModal('modal-add-gasto')">✕</button>
+      </div>
+      <form onsubmit="handleSaveGastoSubmit(event)">
+        <div class="form-group" id="gasto-admin-enc-group" style="display:none;">
+          <label>Colaborador</label>
+          <select id="gasto-encargado"></select>
+        </div>
+        <div class="form-group">
+          <label>Concepto / Descripción del Gasto</label>
+          <input type="text" id="gasto-concepto" required placeholder="Ej: Compra de lejía, bolsas y detergente">
+        </div>
+        <div class="form-group">
+          <label>Importe (€)</label>
+          <input type="number" step="0.01" id="gasto-importe" required placeholder="0.00">
+        </div>
+        <div class="form-group" style="margin-bottom:20px;">
+          <label>Fecha del Gasto</label>
+          <input type="date" id="gasto-fecha" required>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn" onclick="closeModal('modal-add-gasto')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Gasto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal: Nuova/Modifica Pulizia (Admin) -->
   <div class="modal-overlay" id="modal-riga">
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title" id="modal-riga-title">Nuova Pulizia</div>
+        <div class="modal-title" id="modal-riga-title">Nueva Limpieza</div>
         <button class="modal-close" onclick="closeModal('modal-riga')">✕</button>
       </div>
       <form onsubmit="handleSaveRiga(event)">
         <input type="hidden" id="riga-id">
         <div class="form-group">
-          <label>Appartamento</label>
+          <label>Apartamento</label>
           <select id="riga-apt" required></select>
         </div>
         <div class="form-group">
-          <label>Data Pulizia</label>
+          <label>Fecha Limpieza</label>
           <input type="date" id="riga-fecha" required>
         </div>
         <div class="form-group">
-          <label>Orario</label>
-          <input type="text" id="riga-horario" placeholder="Es: 11:00">
+          <label>Horario</label>
+          <input type="text" id="riga-horario" placeholder="Ej: 10:00">
         </div>
         <div class="form-group">
-          <label>Preparare Per</label>
-          <input type="text" id="riga-preparar" placeholder="Es: 2 PAX (Matrimoniale)">
+          <label>Preparar Para</label>
+          <input type="text" id="riga-preparar" placeholder="Ej: 2 PAX (Cama matrimonio)">
         </div>
         <div class="form-group">
-          <label>Entrata Prossimi Ospiti</label>
-          <input type="text" id="riga-entrada" placeholder="Es: 15:00">
+          <label>Entrada Próximos Huéspedes</label>
+          <input type="text" id="riga-entrada" placeholder="Ej: 15:00">
         </div>
         <div class="form-group">
-          <label>Note Admin</label>
-          <input type="text" id="riga-notas" placeholder="Es: Cambio lenzuola completo">
+          <label>Notas Administrador</label>
+          <input type="text" id="riga-notas" placeholder="Ej: Poner cuna en habitación">
         </div>
         <div class="form-group" style="margin-bottom:20px;">
           <label>Incaricato/a</label>
           <select id="riga-encargado" required></select>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:10px;">
-          <button type="button" class="btn" onclick="closeModal('modal-riga')">Annulla</button>
-          <button type="submit" class="btn btn-primary" id="btn-save-riga">Salva Pulizia</button>
+          <button type="button" class="btn" onclick="closeModal('modal-riga')">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-riga">Guardar Limpieza</button>
         </div>
       </form>
     </div>
@@ -853,53 +1063,57 @@
   <div class="modal-overlay" id="modal-nota-enc">
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title">Nota Incaricato</div>
+        <div class="modal-title">Nota del Encargado</div>
         <button class="modal-close" onclick="closeModal('modal-nota-enc')">✕</button>
       </div>
       <form onsubmit="handleSaveNotaEnc(event)">
         <input type="hidden" id="nota-enc-id">
         <div class="form-group" style="margin-bottom:20px;">
-          <label>Note sulla pulizia (es: segnalazioni, guasti, rifornimenti)</label>
-          <textarea id="nota-enc-text" rows="4" style="width:100%;" placeholder="Inserisci qui eventuali note..."></textarea>
+          <label>Notas sobre la limpieza (averías, productos gastados, etc.)</label>
+          <textarea id="nota-enc-text" rows="4" style="width:100%;" placeholder="Escribe aquí tu nota..."></textarea>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:10px;">
-          <button type="button" class="btn" onclick="closeModal('modal-nota-enc')">Annulla</button>
-          <button type="submit" class="btn btn-primary">Salva Nota</button>
+          <button type="button" class="btn" onclick="closeModal('modal-nota-enc')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Nota</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Nuovo Collaboratore (Admin) -->
+  <!-- Modal: Nuevo Colaborador (Admin) -->
   <div class="modal-overlay" id="modal-user">
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title">Nuovo Collaboratore</div>
+        <div class="modal-title">Nuevo Colaborador</div>
         <button class="modal-close" onclick="closeModal('modal-user')">✕</button>
       </div>
       <form onsubmit="handleCreateUser(event)">
         <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="user-email" required placeholder="collaboratore@pulizie.it">
+          <label>Correo Electrónico</label>
+          <input type="email" id="user-email" required placeholder="colaborador@pulizie.app">
         </div>
         <div class="form-group">
-          <label>Nome Completo</label>
-          <input type="text" id="user-nombre" required placeholder="Es: Maria Rossi">
+          <label>Nombre Completo</label>
+          <input type="text" id="user-nombre" required placeholder="Ej: María Rossi">
         </div>
         <div class="form-group">
-          <label>Chiave Incaricato (Nome nel Calendario)</label>
-          <select id="user-enckey" required></select>
+          <label>Clave de Encargado (Nombre en Calendario)</label>
+          <input type="text" id="user-enckey" required placeholder="Ej: MARIA" style="text-transform:uppercase;">
+        </div>
+        <div class="form-group">
+          <label>Tarifa por Limpieza (€)</label>
+          <input type="number" step="0.5" id="user-tarifa" value="40" required>
         </div>
         <div class="form-group" style="margin-bottom:20px;">
-          <label>Password Iniziale</label>
+          <label>Contraseña Inicial (se enviará por email)</label>
           <div style="display:flex; gap:8px;">
             <input type="text" id="user-password" required minlength="6" style="flex:1;">
-            <button type="button" class="btn btn-sm" onclick="generaPasswordCasuale('user-password')">🎲 Genera</button>
+            <button type="button" class="btn btn-sm" onclick="generaPasswordCasuale('user-password')">🎲 Generar</button>
           </div>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:10px;">
-          <button type="button" class="btn" onclick="closeModal('modal-user')">Annulla</button>
-          <button type="submit" class="btn btn-primary">Crea Account</button>
+          <button type="button" class="btn" onclick="closeModal('modal-user')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Crear Cuenta</button>
         </div>
       </form>
     </div>
@@ -909,151 +1123,114 @@
   <div class="modal-overlay" id="modal-reset-pwd">
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title">Reset Password Collaboratore</div>
+        <div class="modal-title">Cambiar Contraseña de Colaborador</div>
         <button class="modal-close" onclick="closeModal('modal-reset-pwd')">✕</button>
       </div>
       <form onsubmit="handleResetPasswordSubmit(event)">
         <input type="hidden" id="reset-user-email">
-        <p style="color:var(--text-muted); font-size:0.86rem; margin-bottom:14px;">Reimposta la password per: <strong id="reset-user-email-label"></strong></p>
+        <p style="color:var(--text-muted); font-size:0.86rem; margin-bottom:14px;">
+          Reasignar contraseña para: <strong id="reset-user-email-label"></strong> (se enviará automáticamente por correo).
+        </p>
         <div class="form-group" style="margin-bottom:20px;">
-          <label>Nuova Password</label>
+          <label>Nueva Contraseña</label>
           <div style="display:flex; gap:8px;">
             <input type="text" id="reset-new-password" required minlength="6" style="flex:1;">
-            <button type="button" class="btn btn-sm" onclick="generaPasswordCasuale('reset-new-password')">🎲 Genera</button>
+            <button type="button" class="btn btn-sm" onclick="generaPasswordCasuale('reset-new-password')">🎲 Generar</button>
           </div>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:10px;">
-          <button type="button" class="btn" onclick="closeModal('modal-reset-pwd')">Annulla</button>
-          <button type="submit" class="btn btn-primary">Salva Nuova Password</button>
+          <button type="button" class="btn" onclick="closeModal('modal-reset-pwd')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar y Enviar por Correo</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Calcola Compenso da Calendario -->
-  <div class="modal-overlay" id="modal-calc-comp">
-    <div class="modal">
-      <div class="modal-header">
-        <div class="modal-title">⚡ Calcola Compenso da Calendario</div>
-        <button class="modal-close" onclick="closeModal('modal-calc-comp')">✕</button>
-      </div>
-      <form onsubmit="handleExecCalcolaComp(event)">
-        <div class="form-group">
-          <label>Collaboratore</label>
-          <select id="calc-encargado" required></select>
-        </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-          <div class="form-group">
-            <label>Mese</label>
-            <select id="calc-mes" required>
-              <option value="1">Gennaio</option><option value="2">Febbraio</option><option value="3">Marzo</option>
-              <option value="4">Aprile</option><option value="5">Maggio</option><option value="6">Giugno</option>
-              <option value="7">Luglio</option><option value="8">Agosto</option><option value="9">Settembre</option>
-              <option value="10">Ottobre</option><option value="11">Novembre</option><option value="12">Dicembre</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Anno</label>
-            <select id="calc-anno" required>
-              <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Tariffa per Pulizia (€)</label>
-          <input type="number" step="0.5" id="calc-tarifa" value="40" required>
-        </div>
-        <div id="calc-result-box" style="display:none; background:rgba(20,184,166,0.1); border:1px solid var(--primary); border-radius:8px; padding:12px; margin-bottom:16px;">
-          <div style="font-size:0.88rem; font-weight:600; color:var(--primary);">Pulizie trovate: <span id="calc-count">0</span></div>
-          <div style="font-size:1.1rem; font-weight:700; margin-top:4px;">Totale Calcolato: <span id="calc-totale">€ 0.00</span></div>
-        </div>
-        <div style="display:flex; justify-content:flex-end; gap:10px;">
-          <button type="button" class="btn" onclick="closeModal('modal-calc-comp')">Chiudi</button>
-          <button type="button" class="btn" onclick="anteprimaCalcolo()">Calcola Anteprima</button>
-          <button type="submit" class="btn btn-primary" id="btn-salva-calc-comp" style="display:none;">Salva in Contabilità</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Modal: Aggiorna Stato Pagamento -->
+  <!-- Modal: Actualizar Estado de Pago Contabilidad -->
   <div class="modal-overlay" id="modal-stato-cont">
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title">Aggiorna Stato Pagamento</div>
+        <div class="modal-title">Actualizar Estado de Pago</div>
         <button class="modal-close" onclick="closeModal('modal-stato-cont')">✕</button>
       </div>
       <form onsubmit="handleUpdateStatoCont(event)">
         <input type="hidden" id="stato-cont-id">
         <div class="form-group">
-          <label>Stato Pagamento</label>
+          <label>Estado del Pago</label>
           <select id="stato-cont-estado">
-            <option value="pendiente">🟡 In Attesa</option>
-            <option value="pagato">🟢 Pagato</option>
+            <option value="pendiente">🟡 Pendiente</option>
+            <option value="pagado">🟢 Pagado</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Data Pagamento</label>
+          <label>Fecha de Pago</label>
           <input type="date" id="stato-cont-fecha">
         </div>
         <div class="form-group" style="margin-bottom:20px;">
-          <label>Note Pagamento</label>
-          <input type="text" id="stato-cont-notas" placeholder="Es: Bonifico effettuato il 05/11">
+          <label>Notas de Pago</label>
+          <input type="text" id="stato-cont-notas" placeholder="Ej: Transferencia realizada">
         </div>
         <div style="display:flex; justify-content:flex-end; gap:10px;">
-          <button type="button" class="btn" onclick="closeModal('modal-stato-cont')">Annulla</button>
-          <button type="submit" class="btn btn-primary">Salva Stato</button>
+          <button type="button" class="btn" onclick="closeModal('modal-stato-cont')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Estado</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Configurazione Script URL -->
+  <!-- Modal: Configuración Script URL -->
   <div class="modal-overlay" id="modal-script-url">
     <div class="modal">
       <div class="modal-header">
-        <div class="modal-title">⚙️ Connessione Backend Google Apps Script</div>
+        <div class="modal-title">⚙️ Conexión Backend Google Apps Script</div>
         <button class="modal-close" onclick="closeModal('modal-script-url')">✕</button>
       </div>
       <div class="form-group" style="margin-bottom:20px;">
         <label>URL Web App Apps Script</label>
         <input type="text" id="cfg-script-url" style="width:100%;">
-        <span style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Inserisci l'URL del deployment Web App che termina con /exec</span>
+        <span style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Debe terminar en /exec</span>
       </div>
       <div style="display:flex; justify-content:flex-end; gap:10px;">
-        <button type="button" class="btn" onclick="closeModal('modal-script-url')">Annulla</button>
-        <button type="button" class="btn btn-primary" onclick="salvaScriptUrl()">Salva e Riconnetti</button>
+        <button type="button" class="btn" onclick="closeModal('modal-script-url')">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="salvaScriptUrl()">Guardar y Reconectar</button>
       </div>
     </div>
   </div>
+
+  <!-- Layout Invisible para Impresión PDF -->
+  <div id="printable-report" style="display:none;"></div>
 
   <!-- Toast Container -->
   <div id="toast-container"></div>
 
   <!-- ==================== APPLICATION SCRIPT ==================== -->
   <script>
-    // --- Configurazione Iniziale ---
     const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxpUbcKCoxEqKB6rBy2FvW_FQXVROdl6Gkakc9gtXhpDswRdXtml2M4eyXF5XOj340AA/exec";
-    let SCRIPT_URL = localStorage.getItem("CP_SCRIPT_URL") || DEFAULT_SCRIPT_URL;
+    let SCRIPT_URL = (localStorage.getItem("CP_SCRIPT_URL") || DEFAULT_SCRIPT_URL).trim();
 
-    // Sessione
     let SESSION = {
       token: localStorage.getItem("CP_TOKEN") || null,
       email: localStorage.getItem("CP_EMAIL") || null,
       nombre: localStorage.getItem("CP_NOMBRE") || null,
       role: localStorage.getItem("CP_ROLE") || null,
-      encargadoKey: localStorage.getItem("CP_ENCKEY") || null
+      encargadoKey: localStorage.getItem("CP_ENCKEY") || null,
+      permisos: JSON.parse(localStorage.getItem("CP_PERMISOS") || '{"verHorario":true,"verPrepararPara":true,"verEntradaProximos":true,"verNotasAdmin":true,"verDiasLibres":true,"verPlataforma":true,"verContabilidad":true,"puedeAgregarGastos":true}'),
+      precioLimpieza: parseFloat(localStorage.getItem("CP_PRECIO") || 40)
     };
 
-    // Cache configurazione
     let APP_CONFIG = { apartamentos: [], encargados: [] };
     let CURRENT_CALENDARIO_ROWS = [];
+    let CURRENT_CONTABILIDAD_ROWS = [];
+    let CURRENT_GASTOS_ROWS = [];
+    let UNREAD_NOTIF_IDS = [];
 
-    // --- PWA Service Worker & Install Prompt ---
+    // --- PWA Service Worker ---
     let deferredInstallPrompt = null;
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW reg error:', err));
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+          reg.update();
+        }).catch(err => console.log('SW reg error:', err));
       });
     }
 
@@ -1068,13 +1245,10 @@
       if (deferredInstallPrompt) {
         deferredInstallPrompt.prompt();
         const { outcome } = await deferredInstallPrompt.userChoice;
-        if (outcome === 'accepted') {
-          dismissPwaBanner();
-        }
+        if (outcome === 'accepted') dismissPwaBanner();
         deferredInstallPrompt = null;
       } else {
-        // Istruzioni per iOS o browser che non supportano prompt programmatico
-        alert("Per installare su iOS:\n1. Tocca il pulsante Condividi (icona quadrato con freccia in alto)\n2. Scorri e tocca 'Aggiungi alla schermata Home' ➕");
+        alert("Para instalar en iOS:\n1. Toca el botón Compartir (icono cuadrado con flecha)\n2. Desplaza y pulsa 'Añadir a pantalla de inicio' ➕");
       }
     });
 
@@ -1112,20 +1286,34 @@
     function generaPasswordCasuale(targetInputId) {
       const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
       let pwd = "";
-      for (let i = 0; i < 10; i++) {
-        pwd += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
+      for (let i = 0; i < 10; i++) pwd += chars.charAt(Math.floor(Math.random() * chars.length));
       document.getElementById(targetInputId).value = pwd;
     }
 
-    // --- API CLIENT (POST con CORS Friendly text/plain) ---
+    function getCleanField(r, field) {
+      if (!r) return '';
+      switch (field) {
+        case 'id': return (r.id !== undefined && r.id !== '') ? r.id : (r.ID !== undefined ? r.ID : '');
+        case 'apartamento': return r.apartamento || r['APARTAMENTO'] || r['Apartamento'] || '-';
+        case 'fecha': return r.fecha || r['FECHA LIMPIEZA'] || r['FECHA'] || r['Fecha'] || '-';
+        case 'horario': return r.horario || r['HORARIO'] || r['Horario'] || '-';
+        case 'preparar': return r.preparar || r['PREPARAR PARA'] || r['Preparar'] || '-';
+        case 'entrada': return r.entrada || r['ENTRADA PROXIMOS'] || r['Entrada'] || '-';
+        case 'notas': return r.notas || r['NOTAS ADMIN'] || r['Notas'] || '-';
+        case 'encargado': return r.encargado || r['ENCARGADO/A'] || r['ENCARGADO'] || r['Encargado'] || 'Da assegnare';
+        case 'notaEncargado': return r.notaEncargado || r['NOTA ENCARGADO'] || r['Nota Encargado'] || '';
+        default: return r[field] || '';
+      }
+    }
+
+    // --- API CLIENT (POST con GET Fallback) ---
     async function apiCall(action, payload = {}) {
       setSyncing(true);
+      const cleanUrl = SCRIPT_URL.trim();
       const bodyData = Object.assign({ action: action, token: SESSION.token }, payload);
       
-      // Tentativo 1: POST
       try {
-        const response = await fetch(SCRIPT_URL, {
+        const response = await fetch(cleanUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(bodyData),
@@ -1135,9 +1323,7 @@
         setSyncing(false);
         return json;
       } catch (postErr) {
-        console.warn("POST apiCall fallito, tentativo di fallback con GET...", postErr);
-        
-        // Tentativo 2: GET Fallback (risolve problemi di CORS redirect nei Service Worker dei browser)
+        console.warn("POST apiCall fallido, intentando con GET...", postErr);
         try {
           const params = new URLSearchParams();
           params.append('action', action);
@@ -1149,42 +1335,46 @@
               params.append(k, payload[k]);
             }
           }
-          const getUrl = SCRIPT_URL + (SCRIPT_URL.includes('?') ? '&' : '?') + params.toString();
-          const response = await fetch(getUrl, {
-            method: 'GET',
-            redirect: 'follow'
-          });
+          const getUrl = cleanUrl + (cleanUrl.includes('?') ? '&' : '?') + params.toString();
+          const response = await fetch(getUrl, { method: 'GET', redirect: 'follow' });
           const json = await response.json();
           setSyncing(false);
           return json;
         } catch (getErr) {
           setSyncing(false);
-          console.error("API error definitivo (" + action + "):", getErr);
+          console.error("API error (" + action + "):", getErr);
           throw getErr;
         }
       }
     }
 
-    // --- Avvio e Routing Viste ---
+    // --- Arranque y Routing ---
     window.addEventListener('DOMContentLoaded', async () => {
-      // Imposta data corrente nei selettori
       const now = new Date();
       const currentMonth = now.getMonth() + 1;
       const currentYear = now.getFullYear();
 
-      ['admin-filter-mes', 'admin-cont-filter-mes', 'collab-filter-mes', 'calc-mes'].forEach(id => {
+      ['admin-filter-mes', 'admin-cont-filter-mes', 'collab-filter-mes'].forEach(id => {
         const el = document.getElementById(id);
-        if (el && el.value === "") el.value = currentMonth;
-        else if (el) el.value = currentMonth;
+        if (el) el.value = currentMonth;
       });
-      ['admin-filter-anno', 'admin-cont-filter-anno', 'collab-filter-anno', 'calc-anno'].forEach(id => {
+      ['admin-filter-anno', 'admin-cont-filter-anno', 'collab-filter-anno'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = currentYear;
       });
 
       document.getElementById('cfg-script-url').value = SCRIPT_URL;
 
-      // Verifica sessione salvata
+      // Autorellenar si se guardaron credenciales
+      const savedEmail = localStorage.getItem("CP_SAVED_EMAIL");
+      const savedPwd   = localStorage.getItem("CP_SAVED_PWD");
+      if (savedEmail && savedPwd) {
+        document.getElementById('login-email').value = savedEmail;
+        document.getElementById('login-password').value = savedPwd;
+        document.getElementById('login-remember').checked = true;
+      }
+
+      // Verificar sesión previa
       if (SESSION.token) {
         try {
           const res = await apiCall("verificarSesion");
@@ -1193,11 +1383,13 @@
             SESSION.email = res.email;
             SESSION.nombre = res.nombre;
             SESSION.encargadoKey = res.encargadoKey;
+            SESSION.permisos = res.permisos || DEFAULT_PERMISOS;
+            SESSION.precioLimpieza = res.precioLimpieza || 40;
             showAppView();
             return;
           }
         } catch (e) {
-          console.warn("Verifica sessione fallita, richiesta login");
+          console.warn("Sesión expirada");
         }
       }
       showLoginView();
@@ -1215,7 +1407,7 @@
       document.getElementById('user-status-pill').style.display = 'flex';
       document.getElementById('btn-logout').style.display = 'inline-flex';
       document.getElementById('header-user-name').innerText = SESSION.nombre || SESSION.email;
-      document.getElementById('header-user-role').innerText = SESSION.role === 'admin' ? 'Admin' : 'Collaboratore';
+      document.getElementById('header-user-role').innerText = SESSION.role === 'admin' ? 'Administrador' : 'Colaborador';
 
       if (SESSION.role === 'admin') {
         document.getElementById('view-admin').classList.add('active');
@@ -1231,15 +1423,16 @@
       e.preventDefault();
       const email = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-password').value;
+      const remember = document.getElementById('login-remember').checked;
       const btn = document.getElementById('btn-login-submit');
 
       btn.disabled = true;
-      btn.innerText = "Accesso in corso...";
+      btn.innerText = "Iniciando sesión...";
 
       try {
         const res = await apiCall("login", { email: email, password: password });
         btn.disabled = false;
-        btn.innerText = "Accedi";
+        btn.innerText = "Iniciar Sesión";
 
         if (res && res.success) {
           const u = res.user || res;
@@ -1248,35 +1441,49 @@
           SESSION.nombre = u.nombre || "";
           SESSION.role = u.role || "";
           SESSION.encargadoKey = u.encargadoKey || "";
+          SESSION.permisos = u.permisos || DEFAULT_PERMISOS;
+          SESSION.precioLimpieza = u.precioLimpieza || 40;
 
           localStorage.setItem("CP_TOKEN", SESSION.token);
           localStorage.setItem("CP_EMAIL", SESSION.email);
           localStorage.setItem("CP_NOMBRE", SESSION.nombre);
           localStorage.setItem("CP_ROLE", SESSION.role);
           localStorage.setItem("CP_ENCKEY", SESSION.encargadoKey);
+          localStorage.setItem("CP_PERMISOS", JSON.stringify(SESSION.permisos));
+          localStorage.setItem("CP_PRECIO", SESSION.precioLimpieza);
 
-          toast("Accesso effettuato con successo!", "success");
+          if (remember) {
+            localStorage.setItem("CP_SAVED_EMAIL", email);
+            localStorage.setItem("CP_SAVED_PWD", password);
+          } else {
+            localStorage.removeItem("CP_SAVED_EMAIL");
+            localStorage.removeItem("CP_SAVED_PWD");
+          }
+
+          toast("¡Acceso correcto!", "success");
           showAppView();
         } else {
-          toast(res.error || "Credenziali non valide", "error");
+          toast(res.error || "Credenciales no válidas", "error");
         }
       } catch (err) {
         btn.disabled = false;
-        btn.innerText = "Accedi";
+        btn.innerText = "Iniciar Sesión";
         console.error("Login catch error:", err);
-        toast("Errore (" + (err.name || "Errore") + "): " + (err.message || "Verifica la connessione"), "error");
+        toast("Error de conexión: " + (err.message || "Verifica la red"), "error");
       }
     }
 
     async function appLogout() {
       try { await apiCall("logout"); } catch(e){}
-      SESSION = { token: null, email: null, nombre: null, role: null, encargadoKey: null };
+      SESSION = { token: null, email: null, nombre: null, role: null, encargadoKey: null, permisos: DEFAULT_PERMISOS, precioLimpieza: 40 };
       localStorage.removeItem("CP_TOKEN");
       localStorage.removeItem("CP_EMAIL");
       localStorage.removeItem("CP_NOMBRE");
       localStorage.removeItem("CP_ROLE");
       localStorage.removeItem("CP_ENCKEY");
-      toast("Disconnesso", "info");
+      localStorage.removeItem("CP_PERMISOS");
+      localStorage.removeItem("CP_PRECIO");
+      toast("Sesión cerrada", "info");
       showLoginView();
     }
 
@@ -1286,7 +1493,7 @@
       SCRIPT_URL = val;
       localStorage.setItem("CP_SCRIPT_URL", val);
       closeModal('modal-script-url');
-      toast("URL script aggiornato", "success");
+      toast("URL del script actualizada", "success");
     }
 
     // --- Tab Navigation ---
@@ -1302,6 +1509,7 @@
       if (tabName === 'collaboratori') loadAdminUtenti();
       if (tabName === 'contabilita') loadAdminContabilita();
       if (tabName === 'configurazione') loadAdminConfig();
+      if (tabName === 'profilo') loadAdminProfileTab();
     }
 
     function switchCollabTab(tabName, btnEl) {
@@ -1323,10 +1531,48 @@
     }
 
     async function initCollabView() {
-      document.getElementById('collab-info-nome').innerText = SESSION.nombre;
-      document.getElementById('collab-info-email').innerText = SESSION.email;
-      document.getElementById('collab-info-enc').innerText = SESSION.encargadoKey || "Non assegnato";
+      document.getElementById('collab-info-nombre').innerText = SESSION.nombre;
+      document.getElementById('collab-info-enc').innerText = SESSION.encargadoKey || "No asignado";
+      document.getElementById('collab-info-tarifa').innerText = "€ " + (SESSION.precioLimpieza || 40).toFixed(2);
+      document.getElementById('collab-new-email').value = SESSION.email;
+
+      // Ocultar pestaña contabilidad si no tiene permiso
+      const tabCompBtn = document.getElementById('collab-tab-btn-compensi');
+      if (tabCompBtn) {
+        tabCompBtn.style.display = (SESSION.permisos.verContabilidad !== false) ? 'flex' : 'none';
+      }
+
       loadCollabCalendario();
+      checkCollabNotificaciones();
+    }
+
+    async function checkCollabNotificaciones() {
+      try {
+        const res = await apiCall("getNotificaciones");
+        if (res && res.success && res.notificaciones && res.notificaciones.length > 0) {
+          UNREAD_NOTIF_IDS = res.notificaciones.map(n => n.id);
+          const container = document.getElementById('notif-list-container');
+          let html = '';
+          res.notificaciones.forEach(n => {
+            html += '<div class="notif-item">';
+            html += '<div class="notif-msg">🧹 ' + n.mensaje + '</div>';
+            html += '<div class="notif-time">' + n.creado + '</div>';
+            html += '</div>';
+          });
+          container.innerHTML = html;
+          openModal('modal-notificaciones');
+        }
+      } catch(e) {}
+    }
+
+    async function closeModalNotificaciones() {
+      closeModal('modal-notificaciones');
+      if (UNREAD_NOTIF_IDS.length > 0) {
+        try {
+          await apiCall("marcarNotificacionesLeidas", { ids: UNREAD_NOTIF_IDS });
+          UNREAD_NOTIF_IDS = [];
+        } catch(e) {}
+      }
     }
 
     async function loadAppConfig() {
@@ -1337,29 +1583,29 @@
           populateConfigDropdowns();
         }
       } catch (e) {
-        console.warn("Errore caricamento config:", e);
+        console.warn("Error cargando config:", e);
       }
     }
 
     function populateConfigDropdowns() {
-      const aptSelects = ['admin-filter-apt', 'riga-apt'];
+      const aptSelects = ['admin-filter-apt', 'admin-cont-filter-apt', 'riga-apt'];
       aptSelects.forEach(id => {
         const sel = document.getElementById(id);
         if (!sel) return;
         const currentVal = sel.value;
-        sel.innerHTML = id.includes('filter') ? '<option value="">Tutti</option>' : '<option value="">Seleziona...</option>';
+        sel.innerHTML = id.includes('filter') ? '<option value="">Todos</option>' : '<option value="">Selecciona...</option>';
         (APP_CONFIG.apartamentos || []).forEach(apt => {
           sel.innerHTML += '<option value="' + apt + '">' + apt + '</option>';
         });
         if (currentVal) sel.value = currentVal;
       });
 
-      const encSelects = ['admin-filter-enc', 'admin-cont-filter-enc', 'riga-encargado', 'user-enckey', 'calc-encargado'];
+      const encSelects = ['admin-filter-enc', 'admin-cont-filter-enc', 'riga-encargado', 'gasto-encargado'];
       encSelects.forEach(id => {
         const sel = document.getElementById(id);
         if (!sel) return;
         const currentVal = sel.value;
-        sel.innerHTML = id.includes('filter') ? '<option value="">Tutti</option>' : '<option value="">Seleziona...</option>';
+        sel.innerHTML = id.includes('filter') ? '<option value="">Todos</option>' : '<option value="">Selecciona...</option>';
         (APP_CONFIG.encargados || []).forEach(enc => {
           const name = typeof enc === 'object' ? (enc.nombre || '') : enc;
           if (name) sel.innerHTML += '<option value="' + name + '">' + name + '</option>';
@@ -1376,7 +1622,7 @@
       const apt = document.getElementById('admin-filter-apt').value;
       const tbody = document.getElementById('tbody-admin-calendario');
 
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento dati...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando calendario...</td></tr>';
 
       try {
         const res = await apiCall("getCalendario", { mes: mes, anno: anno, userFilter: enc, aptFilter: apt });
@@ -1384,34 +1630,17 @@
           CURRENT_CALENDARIO_ROWS = res.rows || res.data || [];
           renderAdminCalendarioTable(CURRENT_CALENDARIO_ROWS);
         } else {
-          tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Errore") + '</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Error") + '</td></tr>';
         }
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--danger);">Errore di connessione</td></tr>';
-      }
-    }
-
-
-    function getCleanField(r, field) {
-      if (!r) return '';
-      switch (field) {
-        case 'id': return (r.id !== undefined && r.id !== '') ? r.id : (r.ID !== undefined ? r.ID : '');
-        case 'apartamento': return r.apartamento || r['APARTAMENTO'] || r['Apartamento'] || '-';
-        case 'fecha': return r.fecha || r['FECHA LIMPIEZA'] || r['FECHA'] || r['Fecha'] || '-';
-        case 'horario': return r.horario || r['HORARIO'] || r['Horario'] || '-';
-        case 'preparar': return r.preparar || r['PREPARAR PARA'] || r['Preparar'] || '-';
-        case 'entrada': return r.entrada || r['ENTRADA PROXIMOS'] || r['Entrada'] || '-';
-        case 'notas': return r.notas || r['NOTAS ADMIN'] || r['Notas'] || '-';
-        case 'encargado': return r.encargado || r['ENCARGADO/A'] || r['ENCARGADO'] || r['Encargado'] || 'Da assegnare';
-        case 'notaEncargado': return r.notaEncargado || r['NOTA ENCARGADO'] || r['Nota Encargado'] || '';
-        default: return r[field] || '';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--danger);">Error de conexión</td></tr>';
       }
     }
 
     function renderAdminCalendarioTable(rows) {
       const tbody = document.getElementById('tbody-admin-calendario');
       if (!rows || rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Nessuna pulizia programmata per questo periodo</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">No hay limpiezas programadas para este periodo</td></tr>';
         return;
       }
 
@@ -1437,8 +1666,8 @@
         html += '<td><span class="badge badge-enc">' + encargado + '</span></td>';
         html += '<td>' + (notaEnc ? '<span style="color:var(--primary); font-size:0.8rem;">💬 ' + notaEnc + '</span>' : '<span style="color:var(--text-muted);">-</span>') + '</td>';
         html += '<td style="text-align:right; white-space:nowrap;">';
-        html += '<button class="btn btn-sm" onclick="openModalEditRiga(\'' + id + '\')" style="margin-right:6px;">✏️</button>';
-        html += '<button class="btn btn-sm btn-danger" onclick="eliminaRiga(\'' + id + '\')">🗑️</button>';
+        html += '<button class="btn btn-sm" onclick="openModalEditRiga(\'' + id + '\')" style="margin-right:6px;" title="Editar">✏️</button>';
+        html += '<button class="btn btn-sm btn-danger" onclick="eliminaRiga(\'' + id + '\')" title="Eliminar">🗑️</button>';
         html += '</td>';
         html += '</tr>';
       });
@@ -1446,10 +1675,10 @@
     }
 
     function openModalAddRiga() {
-      document.getElementById('modal-riga-title').innerText = "Nuova Pulizia";
+      document.getElementById('modal-riga-title').innerText = "Nueva Limpieza";
       document.getElementById('riga-id').value = "";
       document.getElementById('riga-fecha').value = "";
-      document.getElementById('riga-horario').value = "";
+      document.getElementById('riga-horario').value = "10:00";
       document.getElementById('riga-preparar').value = "";
       document.getElementById('riga-entrada').value = "";
       document.getElementById('riga-notas').value = "";
@@ -1459,7 +1688,7 @@
     function openModalEditRiga(id) {
       const r = CURRENT_CALENDARIO_ROWS.find(item => getCleanField(item, 'id') == id);
       if (!r) return;
-      document.getElementById('modal-riga-title').innerText = "Modifica Pulizia";
+      document.getElementById('modal-riga-title').innerText = "Modificar Limpieza";
       document.getElementById('riga-id').value = getCleanField(r, 'id');
       document.getElementById('riga-apt').value = getCleanField(r, 'apartamento') !== '-' ? getCleanField(r, 'apartamento') : '';
       document.getElementById('riga-fecha').value = getCleanField(r, 'fecha') !== '-' ? getCleanField(r, 'fecha') : '';
@@ -1490,70 +1719,75 @@
         const res = await apiCall("saveRiga", { rowData: rowData, mes: mes, anno: anno });
         if (res && res.success) {
           closeModal('modal-riga');
-          toast("Pulizia salvata con successo", "success");
+          toast("Limpieza guardada correctamente", "success");
           loadAdminCalendario();
         } else {
-          toast(res.error || "Errore nel salvataggio", "error");
+          toast(res.error || "Error al guardar", "error");
         }
       } catch (err) {
-        toast("Errore di rete", "error");
+        toast("Error de red", "error");
       }
     }
 
     async function eliminaRiga(id) {
-      if (!confirm("Sei sicuro di voler eliminare questa pulizia dal calendario?")) return;
+      if (!confirm("¿Seguro que deseas eliminar esta limpieza? Se notificará al colaborador.")) return;
       const mes = document.getElementById('admin-filter-mes').value;
       const anno = document.getElementById('admin-filter-anno').value;
       try {
         const res = await apiCall("deleteRiga", { id: id, mes: mes, anno: anno });
         if (res && res.success) {
-          toast("Pulizia eliminata", "info");
+          toast("Limpieza eliminada", "info");
           loadAdminCalendario();
         } else {
-          toast(res.error || "Errore eliminazione", "error");
+          toast(res.error || "Error al eliminar", "error");
         }
       } catch (err) {
-        toast("Errore di rete", "error");
+        toast("Error de red", "error");
       }
     }
 
-    // --- Gestione Collaboratori (Admin) ---
+    // --- Colaboradores y Permisos (Admin) ---
+    let CURRENT_USERS_LIST = [];
     async function loadAdminUtenti() {
       const tbody = document.getElementById('tbody-admin-utenti');
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento collaboratori...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando colaboradores...</td></tr>';
       try {
         const res = await apiCall("getUsuarios");
         if (res && res.success) {
-          renderAdminUtentiTable(res.users || res.data || []);
+          CURRENT_USERS_LIST = res.users || res.data || [];
+          renderAdminUtentiTable(CURRENT_USERS_LIST);
         } else {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Errore") + '</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Error") + '</td></tr>';
         }
       } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">Errore di rete</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">Error de red</td></tr>';
       }
     }
 
     function renderAdminUtentiTable(utenti) {
       const tbody = document.getElementById('tbody-admin-utenti');
       if (!utenti || utenti.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Nessun collaboratore registrato</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">No hay colaboradores registrados</td></tr>';
         return;
       }
       let html = '';
       utenti.forEach(u => {
         const isBlocked = u.bloqueado === true;
+        const tarifa = (u.precioLimpieza || 40).toFixed(2);
         html += '<tr>';
         html += '<td><strong>' + (u.nombre || '-') + '</strong></td>';
         html += '<td>' + (u.email || '-') + '</td>';
         html += '<td><span class="badge badge-enc">' + (u.encargadoKey || '-') + '</span></td>';
-        html += '<td>' + (u.role === 'admin' ? '<span class="badge badge-apt">Admin</span>' : 'Collaboratore') + '</td>';
-        html += '<td>' + (isBlocked ? '<span class="badge badge-danger">Bloccato</span>' : '<span class="badge badge-success">Attivo</span>') + '</td>';
+        html += '<td>€ ' + tarifa + '</td>';
+        html += '<td>' + (isBlocked ? '<span class="badge badge-danger">Bloqueado</span>' : '<span class="badge badge-success">Activo</span>') + '</td>';
         html += '<td style="color:var(--text-muted); font-size:0.8rem;">' + (u.ultimoAcceso || '-') + '</td>';
         html += '<td style="text-align:right; white-space:nowrap;">';
         if (u.role !== 'admin') {
-          html += '<button class="btn btn-sm" onclick="openResetPasswordModal(\'' + u.email + '\')" title="Reset Password" style="margin-right:6px;">🔑</button>';
-          html += '<button class="btn btn-sm ' + (isBlocked ? 'btn-success' : 'btn-danger') + '" onclick="toggleBloccaUser(\'' + u.email + '\')" style="margin-right:6px;">' + (isBlocked ? 'Sblocca' : 'Blocca') + '</button>';
-          html += '<button class="btn btn-sm btn-danger" onclick="eliminaUser(\'' + u.email + '\')">🗑️</button>';
+          html += '<button class="btn btn-sm btn-secondary" onclick="openFichaColaborador(\'' + u.email + '\')" style="margin-right:6px;" title="Ver Ficha y Permisos">⚙️ Ficha</button>';
+          html += '<button class="btn btn-sm ' + (isBlocked ? 'btn-success' : 'btn-danger') + '" onclick="toggleBloccaUser(\'' + u.email + '\')" style="margin-right:6px;">' + (isBlocked ? 'Desbloquear' : 'Bloquear') + '</button>';
+          html += '<button class="btn btn-sm btn-danger" onclick="eliminaUser(\'' + u.email + '\')" title="Eliminar">🗑️</button>';
+        } else {
+          html += '<span class="badge badge-apt">Administrador</span>';
         }
         html += '</td>';
         html += '</tr>';
@@ -1561,25 +1795,91 @@
       tbody.innerHTML = html;
     }
 
-    
+    function openFichaColaborador(email) {
+      const u = CURRENT_USERS_LIST.find(user => user.email.toLowerCase() === email.toLowerCase());
+      if (!u) return;
+
+      document.getElementById('ficha-orig-email').value = u.email;
+      document.getElementById('ficha-nombre').value = u.nombre || '';
+      document.getElementById('ficha-email').value = u.email;
+      document.getElementById('ficha-enckey').value = u.encargadoKey || '';
+      document.getElementById('ficha-tarifa').value = u.precioLimpieza || 40;
+
+      const p = u.permisos || {};
+      document.getElementById('perm-horario').checked = (p.verHorario !== false);
+      document.getElementById('perm-preparar').checked = (p.verPrepararPara !== false);
+      document.getElementById('perm-entrada').checked = (p.verEntradaProximos !== false);
+      document.getElementById('perm-notas-admin').checked = (p.verNotasAdmin !== false);
+      document.getElementById('perm-dias-libres').checked = (p.verDiasLibres !== false);
+      document.getElementById('perm-plataforma').checked = (p.verPlataforma !== false);
+      document.getElementById('perm-contabilidad').checked = (p.verContabilidad !== false);
+      document.getElementById('perm-gastos').checked = (p.puedeAgregarGastos !== false);
+
+      openModal('modal-collab-ficha');
+    }
+
+    function openResetPasswordFromFicha() {
+      const email = document.getElementById('ficha-orig-email').value;
+      closeModal('modal-collab-ficha');
+      openResetPasswordModal(email);
+    }
+
+    async function handleSaveFichaSubmit(e) {
+      e.preventDefault();
+      const origEmail = document.getElementById('ficha-orig-email').value;
+      const permisos = {
+        verHorario: document.getElementById('perm-horario').checked,
+        verPrepararPara: document.getElementById('perm-preparar').checked,
+        verEntradaProximos: document.getElementById('perm-entrada').checked,
+        verNotasAdmin: document.getElementById('perm-notas-admin').checked,
+        verDiasLibres: document.getElementById('perm-dias-libres').checked,
+        verPlataforma: document.getElementById('perm-plataforma').checked,
+        verContabilidad: document.getElementById('perm-contabilidad').checked,
+        puedeAgregarGastos: document.getElementById('perm-gastos').checked
+      };
+
+      const userData = {
+        nombre: document.getElementById('ficha-nombre').value.trim(),
+        email: document.getElementById('ficha-email').value.trim(),
+        encargadoKey: document.getElementById('ficha-enckey').value.trim().toUpperCase(),
+        precioLimpieza: parseFloat(document.getElementById('ficha-tarifa').value) || 40,
+        permisos: permisos
+      };
+
+      try {
+        const res = await apiCall("actualizarUsuario", { id: origEmail, userData: userData });
+        if (res && res.success) {
+          closeModal('modal-collab-ficha');
+          toast("Ficha y permisos actualizados correctamente", "success");
+          loadAdminUtenti();
+        } else {
+          toast(res.error || "Error al actualizar", "error");
+        }
+      } catch (err) {
+        toast("Error de red", "error");
+      }
+    }
+
     async function sincronizzaCollaboratoriEsistenti() {
-      toast("Sincronizzazione collaboratori in corso...", "info");
+      toast("Sincronizando encargados desde el calendario...", "info");
       try {
         const res = await apiCall("syncExistingCollaborators");
         if (res && res.success) {
-          toast("Sincronizzati " + (res.createdCount || 0) + " nuovi collaboratori dal foglio!", "success");
+          toast("¡Sincronización completada! Añadidos " + (res.createdCount || 0) + " colaboradores.", "success");
           loadAdminUtenti();
         } else {
-          toast(res.error || "Errore sincronizzazione", "error");
+          toast(res.error || "Error de sincronización", "error");
         }
       } catch (err) {
-        toast("Errore di rete", "error");
+        toast("Error de red", "error");
       }
     }
 
     function openModalAddUser() {
       document.getElementById('user-email').value = "";
       document.getElementById('user-nombre').value = "";
+      document.getElementById('user-enckey').value = "";
+      document.getElementById('user-tarifa').value = "40";
       generaPasswordCasuale('user-password');
       openModal('modal-user');
     }
@@ -1589,22 +1889,24 @@
       const userData = {
         email: document.getElementById('user-email').value.trim(),
         nombre: document.getElementById('user-nombre').value.trim(),
-        encargadoKey: document.getElementById('user-enckey').value,
+        encargadoKey: document.getElementById('user-enckey').value.trim().toUpperCase(),
+        precioLimpieza: parseFloat(document.getElementById('user-tarifa').value) || 40,
         password: document.getElementById('user-password').value,
-        role: "colaborador"
+        role: "colaborador",
+        permisos: DEFAULT_PERMISOS
       };
 
       try {
         const res = await apiCall("crearUsuario", { userData: userData });
         if (res && res.success) {
           closeModal('modal-user');
-          toast("Account collaboratore creato con successo!", "success");
+          toast("¡Cuenta creada y contraseña enviada por email!", "success");
           loadAdminUtenti();
         } else {
-          toast(res.error || "Errore nella creazione", "error");
+          toast(res.error || "Error al crear cuenta", "error");
         }
       } catch (err) {
-        toast("Errore di rete", "error");
+        toast("Error de red", "error");
       }
     }
 
@@ -1620,15 +1922,15 @@
       const email = document.getElementById('reset-user-email').value;
       const newPwd = document.getElementById('reset-new-password').value;
       try {
-        const res = await apiCall("resetPasswordUsuario", { id: email, newPassword: newPwd });
+        const res = await apiCall("resetPasswordUsuario", { id: email, newPassword: newPwd, notificarEmail: true });
         if (res && res.success) {
           closeModal('modal-reset-pwd');
-          toast("Password reimpostata con successo!", "success");
+          toast("¡Contraseña actualizada y enviada por correo!", "success");
         } else {
-          toast(res.error || "Errore reset", "error");
+          toast(res.error || "Error al resetear contraseña", "error");
         }
       } catch (err) {
-        toast("Errore di rete", "error");
+        toast("Error de red", "error");
       }
     }
 
@@ -1636,59 +1938,65 @@
       try {
         const res = await apiCall("toggleBloquearUsuario", { id: email });
         if (res && res.success) {
-          toast(res.bloqueado ? "Collaboratore bloccato" : "Collaboratore sbloccato", "info");
+          toast(res.bloqueado ? "Colaborador bloqueado" : "Colaborador desbloqueado", "info");
           loadAdminUtenti();
         } else {
-          toast(res.error || "Errore", "error");
+          toast(res.error || "Error", "error");
         }
       } catch (err) {
-        toast("Errore di rete", "error");
+        toast("Error de red", "error");
       }
     }
 
     async function eliminaUser(email) {
-      if (!confirm("Sei sicuro di voler eliminare questo collaboratore?\n\nLo storico dei pagamenti sarà conservato nel foglio Contabilità e le pulizie future resteranno da riassegnare.")) return;
+      if (!confirm("¿Seguro que deseas eliminar este colaborador?\n\nEl historial de pagos se conservará y las limpiezas futuras quedarán por reasignar.")) return;
       try {
         const res = await apiCall("eliminarUsuario", { id: email });
         if (res && res.success) {
-          toast("Collaboratore eliminato (storico contabilità preservato)", "info");
+          toast("Colaborador eliminado (historial conservado)", "info");
           loadAdminUtenti();
         } else {
-          toast(res.error || "Errore eliminazione", "error");
+          toast(res.error || "Error al eliminar", "error");
         }
       } catch (err) {
-        toast("Errore di rete", "error");
+        toast("Error de red", "error");
       }
     }
 
-    // --- Contabilità Admin ---
+    // --- Contabilidad Admin Completa y Automática ---
     async function loadAdminContabilita() {
+      const enc = document.getElementById('admin-cont-filter-enc').value;
+      const apt = document.getElementById('admin-cont-filter-apt').value;
       const mes = document.getElementById('admin-cont-filter-mes').value;
       const anno = document.getElementById('admin-cont-filter-anno').value;
-      const enc = document.getElementById('admin-cont-filter-enc').value;
-      const tbody = document.getElementById('tbody-admin-contabilita');
+      const est = document.getElementById('admin-cont-filter-est').value;
 
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento contabilità...</td></tr>';
+      const tbody = document.getElementById('tbody-admin-contabilita');
+      tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:30px; color:var(--text-muted);">Calculando contabilidad completa...</td></tr>';
 
       try {
-        const res = await apiCall("getContabilidad", { mes: mes, anno: anno, encargado: enc });
+        const res = await apiCall("getContabilidad", { encargado: enc, apartamento: apt, mes: mes, anno: anno, estado: est });
         if (res && res.success) {
-          renderAdminContabilita(res.data || []);
+          CURRENT_CONTABILIDAD_ROWS = res.rows || res.data || [];
+          renderAdminContabilita(CURRENT_CONTABILIDAD_ROWS);
         } else {
-          tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Errore") + '</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Error") + '</td></tr>';
         }
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--danger);">Errore di rete</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:30px; color:var(--danger);">Error de red</td></tr>';
       }
+
+      loadAdminGastos();
     }
 
     function renderAdminContabilita(records) {
-      let tot = 0, pag = 0, att = 0, pul = 0;
+      let tot = 0, pag = 0, att = 0, pul = 0, gas = 0;
       records.forEach(c => {
         const t = parseFloat(c.total) || 0;
         tot += t;
         pul += parseInt(c.nLimpiezas) || 0;
-        if (c.estado === 'pagato' || c.stato === 'pagato') pag += t;
+        gas += parseFloat(c.gastos) || 0;
+        if (c.estado === 'pagado' || c.stato === 'pagado') pag += t;
         else att += t;
       });
 
@@ -1696,95 +2004,39 @@
       document.getElementById('admin-cont-pagato').innerText = "€ " + pag.toFixed(2);
       document.getElementById('admin-cont-attesa').innerText = "€ " + att.toFixed(2);
       document.getElementById('admin-cont-pulizie').innerText = pul;
+      document.getElementById('admin-cont-gastos').innerText = "€ " + gas.toFixed(2);
 
       const tbody = document.getElementById('tbody-admin-contabilita');
       if (!records || records.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">Nessun record contabile trovato</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:30px; color:var(--text-muted);">No hay registros contables para los filtros seleccionados</td></tr>';
         return;
       }
 
       let html = '';
       records.forEach(c => {
-        const isPag = (c.estado === 'pagato' || c.stato === 'pagato');
+        const isPag = (c.estado === 'pagado' || c.stato === 'pagado');
         html += '<tr>';
         html += '<td><strong>' + (c.nombreMes || c.mes) + ' ' + c.anno + '</strong></td>';
+        html += '<td><span class="badge badge-apt">' + (c.apartamento || '-') + '</span></td>';
         html += '<td><span class="badge badge-enc">' + (c.encargado || '-') + '</span></td>';
         html += '<td>' + (c.nLimpiezas || 0) + '</td>';
         html += '<td>€ ' + (c.precioPorLimpieza || 0).toFixed(2) + '</td>';
         html += '<td>€ ' + (c.gastos || 0).toFixed(2) + '</td>';
-        html += '<td><strong style="color:var(--text); font-size:0.95rem;">€ ' + (c.total || 0).toFixed(2) + '</strong></td>';
-        html += '<td>' + (isPag ? '<span class="badge badge-success">Pagato</span>' : '<span class="badge badge-warning">In attesa</span>') + '</td>';
+        html += '<td><strong style="font-size:0.95rem; color:var(--text);">€ ' + (c.total || 0).toFixed(2) + '</strong></td>';
+        html += '<td>' + (isPag ? '<span class="badge badge-success">Pagado</span>' : '<span class="badge badge-warning">Pendiente</span>') + '</td>';
         html += '<td>' + (c.fechaPago || '-') + '</td>';
         html += '<td style="color:var(--text-muted); font-size:0.8rem;">' + (c.notas || '-') + '</td>';
         html += '<td style="text-align:right;">';
-        html += '<button class="btn btn-sm" onclick="openModalStatoCont(\'' + c.id + '\', \'' + (c.estado||c.stato) + '\', \'' + (c.fechaPago||'') + '\', \'' + (c.notas||'') + '\')">✏️ Stato</button>';
+        html += '<button class="btn btn-sm" onclick="openModalStatoCont(\'' + c.id + '\', \'' + (c.estado||c.stato) + '\', \'' + (c.fechaPago||'') + '\', \'' + (c.notas||'').replace(/'/g, "\\'") + '\')">✏️ Estado</button>';
         html += '</td>';
         html += '</tr>';
       });
       tbody.innerHTML = html;
     }
 
-    function openModalCalcolaComp() {
-      document.getElementById('calc-result-box').style.display = 'none';
-      document.getElementById('btn-salva-calc-comp').style.display = 'none';
-      openModal('modal-calc-comp');
-    }
-
-    let ULTIMO_CALCOLO_COMP = null;
-    async function anteprimaCalcolo() {
-      const enc = document.getElementById('calc-encargado').value;
-      const mes = document.getElementById('calc-mes').value;
-      const anno = document.getElementById('calc-anno').value;
-      const tarifa = parseFloat(document.getElementById('calc-tarifa').value) || 40;
-
-      try {
-        const res = await apiCall("calcolarCompensacion", { encargado: enc, mes: mes, anno: anno, precioPorLimpieza: tarifa });
-        if (res && res.success) {
-          ULTIMO_CALCOLO_COMP = res;
-          document.getElementById('calc-count').innerText = res.nLimpiezas;
-          document.getElementById('calc-totale').innerText = "€ " + res.total.toFixed(2);
-          document.getElementById('calc-result-box').style.display = 'block';
-          document.getElementById('btn-salva-calc-comp').style.display = 'inline-flex';
-        } else {
-          toast(res.error || "Errore nel calcolo", "error");
-        }
-      } catch (err) {
-        toast("Errore di rete", "error");
-      }
-    }
-
-    async function handleExecCalcolaComp(e) {
-      e.preventDefault();
-      if (!ULTIMO_CALCOLO_COMP) return;
-      const contData = {
-        encargado: ULTIMO_CALCOLO_COMP.encargado,
-        email: ULTIMO_CALCOLO_COMP.email || "",
-        mes: ULTIMO_CALCOLO_COMP.mes,
-        anno: ULTIMO_CALCOLO_COMP.anno,
-        nLimpiezas: ULTIMO_CALCOLO_COMP.nLimpiezas,
-        precioPorLimpieza: ULTIMO_CALCOLO_COMP.precioPorLimpieza,
-        gastos: 0,
-        estado: 'pendiente',
-        notas: "Calcolato automaticamente da calendario"
-      };
-
-      try {
-        const res = await apiCall("saveContabilidad", { contData: contData });
-        if (res && res.success) {
-          closeModal('modal-calc-comp');
-          toast("Record di compenso salvato con successo!", "success");
-          loadAdminContabilita();
-        } else {
-          toast(res.error || "Errore nel salvataggio", "error");
-        }
-      } catch (err) {
-        toast("Errore di rete", "error");
-      }
-    }
-
     function openModalStatoCont(id, estado, fecha, notas) {
       document.getElementById('stato-cont-id').value = id;
-      document.getElementById('stato-cont-estado').value = (estado === 'pagato') ? 'pagato' : 'pendiente';
+      document.getElementById('stato-cont-estado').value = (estado === 'pagado') ? 'pagado' : 'pendiente';
       document.getElementById('stato-cont-fecha').value = fecha || "";
       document.getElementById('stato-cont-notas').value = notas || "";
       openModal('modal-stato-cont');
@@ -1801,21 +2053,173 @@
         const res = await apiCall("updateEstadoContabilidad", { contId: contId, estado: estado, fechaPago: fecha, notas: notas });
         if (res && res.success) {
           closeModal('modal-stato-cont');
-          toast("Stato pagamento aggiornato", "success");
+          toast("Estado de pago guardado", "success");
           loadAdminContabilita();
         } else {
-          toast(res.error || "Errore aggiornamento", "error");
+          toast(res.error || "Error al actualizar", "error");
         }
       } catch (err) {
-        toast("Errore di rete", "error");
+        toast("Error de red", "error");
       }
+    }
+
+    // --- Gastos (Admin) ---
+    async function loadAdminGastos() {
+      const tbody = document.getElementById('tbody-admin-gastos');
+      try {
+        const res = await apiCall("getGastos");
+        if (res && res.success) {
+          CURRENT_GASTOS_ROWS = res.gastos || res.data || [];
+          renderAdminGastos(CURRENT_GASTOS_ROWS);
+        }
+      } catch(e) {}
+    }
+
+    function renderAdminGastos(gastos) {
+      const tbody = document.getElementById('tbody-admin-gastos');
+      if (!gastos || gastos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-muted);">No hay gastos registrados</td></tr>';
+        return;
+      }
+      let html = '';
+      gastos.forEach(g => {
+        const isAprobado = g.estado === 'aprobado';
+        const isRechazado = g.estado === 'rechazado';
+        let badge = '<span class="badge badge-warning">Pendiente</span>';
+        if (isAprobado) badge = '<span class="badge badge-success">Aprobado</span>';
+        if (isRechazado) badge = '<span class="badge badge-danger">Rechazado</span>';
+
+        html += '<tr>';
+        html += '<td>' + (g.fecha || '-') + '</td>';
+        html += '<td><span class="badge badge-enc">' + (g.encargado || '-') + '</span></td>';
+        html += '<td>' + g.mes + '/' + g.anno + '</td>';
+        html += '<td><strong>' + (g.concepto || '-') + '</strong></td>';
+        html += '<td><strong>€ ' + (g.importe || 0).toFixed(2) + '</strong></td>';
+        html += '<td>' + badge + '</td>';
+        html += '<td style="text-align:right; white-space:nowrap;">';
+        if (!isAprobado) {
+          html += '<button class="btn btn-sm btn-success" onclick="cambiarEstadoGasto(\'' + g.id + '\', \'aprobado\')" style="margin-right:4px;">Aprobar</button>';
+        }
+        if (!isRechazado) {
+          html += '<button class="btn btn-sm btn-danger" onclick="cambiarEstadoGasto(\'' + g.id + '\', \'rechazado\')" style="margin-right:4px;">Rechazar</button>';
+        }
+        html += '<button class="btn btn-sm" onclick="eliminarGasto(\'' + g.id + '\')">🗑️</button>';
+        html += '</td>';
+        html += '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function openModalAddGastoAdmin() {
+      document.getElementById('modal-gasto-title').innerText = "Añadir Gasto (Administrador)";
+      document.getElementById('gasto-admin-enc-group').style.display = 'block';
+      document.getElementById('gasto-concepto').value = "";
+      document.getElementById('gasto-importe').value = "";
+      document.getElementById('gasto-fecha').value = new Date().toISOString().split('T')[0];
+      openModal('modal-add-gasto');
+    }
+
+    async function cambiarEstadoGasto(id, nuevoEstado) {
+      try {
+        const res = await apiCall("updateEstadoGasto", { gastoId: id, nuevoEstado: nuevoEstado });
+        if (res && res.success) {
+          toast("Estado del gasto actualizado a: " + nuevoEstado, "success");
+          loadAdminContabilita();
+        } else {
+          toast(res.error || "Error", "error");
+        }
+      } catch (e) {
+        toast("Error de red", "error");
+      }
+    }
+
+    async function eliminarGasto(id) {
+      if (!confirm("¿Eliminar este gasto?")) return;
+      try {
+        const res = await apiCall("deleteGasto", { gastoId: id });
+        if (res && res.success) {
+          toast("Gasto eliminado", "info");
+          loadAdminContabilita();
+        } else {
+          toast(res.error || "Error", "error");
+        }
+      } catch (e) {
+        toast("Error de red", "error");
+      }
+    }
+
+    // --- Exportar PDF / Imprimir ---
+    function exportarContabilidadPDF() {
+      const records = CURRENT_CONTABILIDAD_ROWS || [];
+      if (records.length === 0) {
+        toast("No hay datos para exportar con los filtros actuales", "error");
+        return;
+      }
+
+      const enc = document.getElementById('admin-cont-filter-enc').value || "Todos";
+      const apt = document.getElementById('admin-cont-filter-apt').value || "Todos";
+      const mes = document.getElementById('admin-cont-filter-mes').value || "Todos";
+      const anno = document.getElementById('admin-cont-filter-anno').value || "Todos";
+      const ahora = new Date().toLocaleString('es-ES');
+
+      let tot = 0, pag = 0, att = 0, pul = 0, gas = 0;
+      let rowsHtml = '';
+      records.forEach(c => {
+        const t = parseFloat(c.total) || 0;
+        tot += t;
+        pul += parseInt(c.nLimpiezas) || 0;
+        gas += parseFloat(c.gastos) || 0;
+        if (c.estado === 'pagado' || c.stato === 'pagado') pag += t;
+        else att += t;
+
+        rowsHtml += '<tr>' +
+          '<td>' + (c.nombreMes || c.mes) + ' ' + c.anno + '</td>' +
+          '<td>' + (c.apartamento || '-') + '</td>' +
+          '<td>' + (c.encargado || '-') + '</td>' +
+          '<td style="text-align:center;">' + (c.nLimpiezas || 0) + '</td>' +
+          '<td>€ ' + (c.precioPorLimpieza || 0).toFixed(2) + '</td>' +
+          '<td>€ ' + (c.gastos || 0).toFixed(2) + '</td>' +
+          '<td><strong>€ ' + t.toFixed(2) + '</strong></td>' +
+          '<td>' + (c.estado === 'pagado' ? 'Pagado' : 'Pendiente') + '</td>' +
+          '<td>' + (c.fechaPago || '-') + '</td>' +
+          '</tr>';
+      });
+
+      const printHtml = '<div style="font-family:Helvetica, Arial, sans-serif; color:#111;">' +
+        '<div style="border-bottom:2px solid #14b8a6; padding-bottom:12px; margin-bottom:16px;">' +
+        '<h1 style="margin:0; font-size:22px; color:#0f172a;">🧹 Calendario de Limpiezas – Informe de Contabilidad</h1>' +
+        '<p style="margin:4px 0 0 0; color:#555; font-size:12px;">Fecha de emisión: ' + ahora + '</p>' +
+        '</div>' +
+        '<div style="background:#f8fafc; padding:12px; border:1px solid #e2e8f0; border-radius:6px; margin-bottom:16px; font-size:12px;">' +
+        '<strong>Filtros aplicados:</strong> Colaborador: ' + enc + ' | Apartamento: ' + apt + ' | Mes: ' + mes + ' | Año: ' + anno +
+        '</div>' +
+        '<div style="display:flex; justify-content:space-between; margin-bottom:16px; font-size:13px;">' +
+        '<div><strong>Total General:</strong> € ' + tot.toFixed(2) + '</div>' +
+        '<div><strong>Total Pagado:</strong> € ' + pag.toFixed(2) + '</div>' +
+        '<div><strong>Total Pendiente:</strong> € ' + att.toFixed(2) + '</div>' +
+        '<div><strong>Total Limpiezas:</strong> ' + pul + '</div>' +
+        '<div><strong>Gastos Aprobados:</strong> € ' + gas.toFixed(2) + '</div>' +
+        '</div>' +
+        '<table>' +
+        '<thead><tr>' +
+        '<th>Periodo</th><th>Apartamento</th><th>Colaborador</th><th>Limpiezas</th><th>Tarifa/u</th><th>Gastos</th><th>Total</th><th>Estado</th><th>Fecha Pago</th>' +
+        '</tr></thead>' +
+        '<tbody>' + rowsHtml + '</tbody>' +
+        '</table>' +
+        '</div>';
+
+      const repEl = document.getElementById('printable-report');
+      repEl.innerHTML = printHtml;
+      repEl.style.display = 'block';
+      window.print();
+      repEl.style.display = 'none';
     }
 
     // --- Configurazione App (Admin) ---
     async function loadAdminConfig() {
       await loadAppConfig();
       document.getElementById('cfg-apartamentos').value = (APP_CONFIG.apartamentos || []).join('\n');
-      document.getElementById('cfg-encargados').value = (APP_CONFIG.encargados || []).join('\n');
+      document.getElementById('cfg-encargados').value = (APP_CONFIG.encargados || []).map(e => typeof e==='object'?(e.nombre||''):e).join('\n');
     }
 
     async function salvaConfigurazioneApp() {
@@ -1824,13 +2228,59 @@
       try {
         const res = await apiCall("saveAppConfig", { apartamentos: apts, encargados: encs });
         if (res && res.success) {
-          toast("Configurazione salvata con successo", "success");
+          toast("Configuración guardada correctamente", "success");
           await loadAppConfig();
         } else {
-          toast(res.error || "Errore salvataggio", "error");
+          toast(res.error || "Error al guardar", "error");
         }
       } catch (err) {
-        toast("Errore di rete", "error");
+        toast("Error de red", "error");
+      }
+    }
+
+    // --- Perfil Admin Update ---
+    function loadAdminProfileTab() {
+      document.getElementById('admin-prof-nombre').value = SESSION.nombre || '';
+      document.getElementById('admin-prof-email').value = SESSION.email || '';
+      document.getElementById('admin-old-pwd').value = '';
+      document.getElementById('admin-new-pwd').value = '';
+      document.getElementById('admin-conf-pwd').value = '';
+    }
+
+    async function handleAdminProfileUpdate(e) {
+      e.preventDefault();
+      const nuevoNombre = document.getElementById('admin-prof-nombre').value.trim();
+      const nuevoEmail  = document.getElementById('admin-prof-email').value.trim();
+      const viejaPwd    = document.getElementById('admin-old-pwd').value;
+      const nuevaPwd    = document.getElementById('admin-new-pwd').value;
+      const confPwd     = document.getElementById('admin-conf-pwd').value;
+
+      if (nuevaPwd && nuevaPwd !== confPwd) {
+        toast("Las nuevas contraseñas no coinciden", "error");
+        return;
+      }
+
+      try {
+        const res = await apiCall("actualizarAdminPerfil", {
+          nuevoNombre: nuevoNombre,
+          nuevoEmail: nuevoEmail,
+          viejaPassword: viejaPwd,
+          nuevaPassword: nuevaPwd
+        });
+        if (res && res.success) {
+          SESSION.email = res.email || nuevoEmail;
+          SESSION.nombre = res.nombre || nuevoNombre;
+          localStorage.setItem("CP_EMAIL", SESSION.email);
+          localStorage.setItem("CP_NOMBRE", SESSION.nombre);
+          document.getElementById('header-user-name').innerText = SESSION.nombre;
+          toast("Perfil de administrador actualizado", "success");
+          e.target.reset();
+          loadAdminProfileTab();
+        } else {
+          toast(res.error || "Error al actualizar perfil", "error");
+        }
+      } catch(err) {
+        toast("Error de red", "error");
       }
     }
 
@@ -1839,30 +2289,43 @@
       const mes = document.getElementById('collab-filter-mes').value;
       const anno = document.getElementById('collab-filter-anno').value;
       const tbody = document.getElementById('tbody-collab-calendario');
+      const thead = document.getElementById('thead-collab-calendario');
 
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento del tuo calendario...</td></tr>';
+      const p = SESSION.permisos || DEFAULT_PERMISOS;
+
+      // Generar cabecera según permisos
+      let thHtml = '<tr><th>Apartamento</th><th>Fecha Limpieza</th>';
+      if (p.verHorario !== false) thHtml += '<th>Horario</th>';
+      if (p.verPrepararPara !== false) thHtml += '<th>Preparar Para</th>';
+      if (p.verEntradaProximos !== false) thHtml += '<th>Próxima Entrada</th>';
+      if (p.verNotasAdmin !== false) thHtml += '<th>Notas Admin</th>';
+      thHtml += '<th>Mi Nota</th></tr>';
+      thead.innerHTML = thHtml;
+
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando tu calendario...</td></tr>';
 
       try {
         const res = await apiCall("getCalendario", { mes: mes, anno: anno });
         if (res && res.success) {
           renderCollabCalendario(res.rows || res.data || []);
         } else {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Errore") + '</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Error") + '</td></tr>';
         }
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">Errore di rete</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">Error de red</td></tr>';
       }
     }
 
     function renderCollabCalendario(rows) {
       const tbody = document.getElementById('tbody-collab-calendario');
-      document.getElementById('collab-count-badge').innerText = rows.length + " Pulizie";
+      document.getElementById('collab-count-badge').innerText = rows.length + " Limpiezas";
 
       if (!rows || rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Nessuna pulizia assegnata a te per questo mese</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">No tienes limpiezas asignadas para este mes</td></tr>';
         return;
       }
 
+      const p = SESSION.permisos || DEFAULT_PERMISOS;
       let html = '';
       rows.forEach(r => {
         const id = getCleanField(r, 'id');
@@ -1877,12 +2340,12 @@
         html += '<tr>';
         html += '<td><span class="badge badge-apt">' + apt + '</span></td>';
         html += '<td><strong>' + fecha + '</strong></td>';
-        html += '<td>' + horario + '</td>';
-        html += '<td>' + preparar + '</td>';
-        html += '<td>' + entrada + '</td>';
-        html += '<td>' + notas + '</td>';
+        if (p.verHorario !== false) html += '<td>' + horario + '</td>';
+        if (p.verPrepararPara !== false) html += '<td>' + preparar + '</td>';
+        if (p.verEntradaProximos !== false) html += '<td>' + entrada + '</td>';
+        if (p.verNotasAdmin !== false) html += '<td>' + notas + '</td>';
         html += '<td>';
-        html += '<button class="btn btn-sm" onclick="openModalNotaEnc(\'' + id + '\', \'' + notaEnc.replace(/'/g, "\\'") + '\')">' + (notaEnc ? '💬 ' + notaEnc : '➕ Aggiungi nota') + '</button>';
+        html += '<button class="btn btn-sm" onclick="openModalNotaEnc(\'' + id + '\', \'' + notaEnc.replace(/'/g, "\\'") + '\')">' + (notaEnc ? '💬 ' + notaEnc : '➕ Añadir nota') + '</button>';
         html += '</td>';
         html += '</tr>';
       });
@@ -1906,93 +2369,169 @@
         const res = await apiCall("saveNotaEncargado", { id: id, nota: nota, mes: mes, anno: anno });
         if (res && res.success) {
           closeModal('modal-nota-enc');
-          toast("Nota salvata con successo", "success");
+          toast("Nota guardada correctamente", "success");
           loadCollabCalendario();
         } else {
-          toast(res.error || "Errore salvataggio nota", "error");
+          toast(res.error || "Error al guardar nota", "error");
         }
       } catch (err) {
-        toast("Errore di rete", "error");
+        toast("Error de red", "error");
       }
     }
 
+    // --- Colaborador Compensi e Gastos ---
     async function loadCollabCompensi() {
-      const tbody = document.getElementById('tbody-collab-compensi');
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Caricamento compensi...</td></tr>';
+      const mes = document.getElementById('collab-filter-mes').value;
+      const anno = document.getElementById('collab-filter-anno').value;
 
       try {
-        const res = await apiCall("getContabilidad");
-        if (res && res.success) {
-          renderCollabCompensi(res.data || []);
+        const res = await apiCall("getContabilidad", { mes: mes, anno: anno });
+        let records = (res && res.success) ? (res.rows || res.data || []) : [];
+
+        let pulCount = 0;
+        let tarifa = SESSION.precioLimpieza || 40;
+        let gastosAprobados = 0;
+        let isPagado = false;
+
+        records.forEach(r => {
+          pulCount += parseInt(r.nLimpiezas) || 0;
+          gastosAprobados += parseFloat(r.gastos) || 0;
+          if (r.estado === 'pagado' || r.stato === 'pagado') isPagado = true;
+        });
+
+        const totalLimp = pulCount * tarifa;
+        const totalLiquidacion = totalLimp + gastosAprobados;
+
+        document.getElementById('collab-stat-pulizie').innerText = pulCount;
+        document.getElementById('collab-stat-totale').innerText = "€ " + totalLimp.toFixed(2);
+        document.getElementById('collab-stat-gastos').innerText = "€ " + gastosAprobados.toFixed(2);
+        document.getElementById('collab-stat-liquidazione').innerText = "€ " + totalLiquidacion.toFixed(2);
+
+        const estBadge = document.getElementById('collab-stat-estado');
+        if (isPagado) {
+          estBadge.innerHTML = '<span class="badge badge-success">🟢 Pagado</span>';
         } else {
-          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Errore") + '</td></tr>';
+          estBadge.innerHTML = '<span class="badge badge-warning">🟡 Pendiente</span>';
         }
+
+        // Control de bloqueo de gastos si el mes está pagado
+        const btnAddGasto = document.getElementById('btn-collab-add-gasto');
+        const cerradoMsg = document.getElementById('collab-mes-cerrado-msg');
+
+        const now = new Date();
+        const curMes = now.getMonth() + 1;
+        const curAnno = now.getFullYear();
+        const isCurrentMonth = (parseInt(mes) === curMes && parseInt(anno) === curAnno);
+
+        if (isPagado) {
+          if (btnAddGasto) btnAddGasto.style.display = 'none';
+          if (cerradoMsg) {
+            cerradoMsg.innerText = "🔒 Este mes ya ha sido liquidado y pagado por el administrador. No se pueden añadir nuevos gastos.";
+            cerradoMsg.style.display = 'block';
+          }
+        } else if (!isCurrentMonth) {
+          if (btnAddGasto) btnAddGasto.style.display = 'none';
+          if (cerradoMsg) {
+            cerradoMsg.innerText = "ℹ️ Solo puedes registrar gastos correspondientes al mes en curso (" + (MESES_ES[curMes-1] || "") + " " + curAnno + ").";
+            cerradoMsg.style.display = 'block';
+          }
+        } else {
+          const puedeGastos = SESSION.permisos && SESSION.permisos.puedeAgregarGastos !== false;
+          if (btnAddGasto) btnAddGasto.style.display = puedeGastos ? 'inline-flex' : 'none';
+          if (cerradoMsg) cerradoMsg.style.display = 'none';
+        }
+
+        loadCollabGastosList(mes, anno);
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--danger);">Errore di rete</td></tr>';
+        console.warn("Error cargando compensi:", err);
       }
     }
 
-    function renderCollabCompensi(records) {
-      let tot = 0, pag = 0, att = 0, pul = 0;
-      records.forEach(c => {
-        const t = parseFloat(c.total) || 0;
-        tot += t;
-        pul += parseInt(c.nLimpiezas) || 0;
-        if (c.estado === 'pagato' || c.stato === 'pagato') pag += t;
-        else att += t;
-      });
+    async function loadCollabGastosList(mes, anno) {
+      const tbody = document.getElementById('tbody-collab-gastos');
+      try {
+        const res = await apiCall("getGastos", { mes: mes, anno: anno });
+        const gastos = (res && res.success) ? (res.gastos || res.data || []) : [];
 
-      document.getElementById('collab-stat-totale').innerText = "€ " + tot.toFixed(2);
-      document.getElementById('collab-stat-pagato').innerText = "€ " + pag.toFixed(2);
-      document.getElementById('collab-stat-attesa').innerText = "€ " + att.toFixed(2);
-      document.getElementById('collab-stat-pulizie').innerText = pul;
+        if (gastos.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">No has añadido gastos para este mes</td></tr>';
+          return;
+        }
 
-      const tbody = document.getElementById('tbody-collab-compensi');
-      if (!records || records.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Nessun compenso registrato per te finora</td></tr>';
-        return;
-      }
+        let html = '';
+        gastos.forEach(g => {
+          let badge = '<span class="badge badge-warning">Pendiente</span>';
+          if (g.estado === 'aprobado') badge = '<span class="badge badge-success">Aprobado</span>';
+          if (g.estado === 'rechazado') badge = '<span class="badge badge-danger">Rechazado</span>';
 
-      let html = '';
-      records.forEach(c => {
-        const isPag = (c.estado === 'pagato' || c.stato === 'pagato');
-        html += '<tr>';
-        html += '<td><strong>' + (c.nombreMes || c.mes) + ' ' + c.anno + '</strong></td>';
-        html += '<td>' + (c.nLimpiezas || 0) + '</td>';
-        html += '<td>€ ' + (c.precioPorLimpieza || 0).toFixed(2) + '</td>';
-        html += '<td>€ ' + (c.gastos || 0).toFixed(2) + '</td>';
-        html += '<td><strong style="color:var(--text); font-size:0.95rem;">€ ' + (c.total || 0).toFixed(2) + '</strong></td>';
-        html += '<td>' + (isPag ? '<span class="badge badge-success">Pagato</span>' : '<span class="badge badge-warning">In attesa</span>') + '</td>';
-        html += '<td>' + (c.fechaPago || '-') + '</td>';
-        html += '<td style="color:var(--text-muted); font-size:0.8rem;">' + (c.notas || '-') + '</td>';
-        html += '</tr>';
-      });
-      tbody.innerHTML = html;
+          html += '<tr>';
+          html += '<td>' + (g.fecha || '-') + '</td>';
+          html += '<td><strong>' + (g.concepto || '-') + '</strong></td>';
+          html += '<td>€ ' + (g.importe || 0).toFixed(2) + '</td>';
+          html += '<td>' + badge + '</td>';
+          html += '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch(e) {}
     }
 
-    // --- Cambio Password ---
-    async function handleCambiaPassword(e) {
+    function openModalAddGastoCollab() {
+      document.getElementById('modal-gasto-title').innerText = "Añadir Gasto de este Mes";
+      document.getElementById('gasto-admin-enc-group').style.display = 'none';
+      document.getElementById('gasto-concepto').value = "";
+      document.getElementById('gasto-importe').value = "";
+      document.getElementById('gasto-fecha').value = new Date().toISOString().split('T')[0];
+      openModal('modal-add-gasto');
+    }
+
+    async function handleSaveGastoSubmit(e) {
       e.preventDefault();
-      const isAdmin = SESSION.role === 'admin';
-      const oldPwd = document.getElementById(isAdmin ? 'admin-old-pwd' : 'collab-old-pwd').value;
-      const newPwd = document.getElementById(isAdmin ? 'admin-new-pwd' : 'collab-new-pwd').value;
-      const confPwd = document.getElementById(isAdmin ? 'admin-conf-pwd' : 'collab-conf-pwd').value;
-
-      if (newPwd !== confPwd) {
-        toast("Le nuove password non coincidono", "error");
-        return;
-      }
+      const mes = document.getElementById(SESSION.role==='admin' ? 'admin-cont-filter-mes' : 'collab-filter-mes').value || (new Date().getMonth()+1);
+      const anno = document.getElementById(SESSION.role==='admin' ? 'admin-cont-filter-anno' : 'collab-filter-anno').value || new Date().getFullYear();
+      const concepto = document.getElementById('gasto-concepto').value.trim();
+      const importe = parseFloat(document.getElementById('gasto-importe').value) || 0;
+      const fecha = document.getElementById('gasto-fecha').value;
+      const encargado = SESSION.role === 'admin' ? document.getElementById('gasto-encargado').value : SESSION.encargadoKey;
 
       try {
-        const res = await apiCall("cambiarPassword", { oldPassword: oldPwd, newPassword: newPwd });
+        const res = await apiCall("saveGasto", {
+          gastoData: {
+            mes: mes,
+            anno: anno,
+            concepto: concepto,
+            importe: importe,
+            fecha: fecha,
+            encargado: encargado
+          }
+        });
         if (res && res.success) {
-          toast("Password cambiata con successo!", "success");
-          e.target.reset();
+          closeModal('modal-add-gasto');
+          toast("Gasto añadido con éxito", "success");
+          if (SESSION.role === 'admin') loadAdminContabilita();
+          else loadCollabCompensi();
         } else {
-          toast(res.error || "Errore cambio password", "error");
+          toast(res.error || "Error al añadir gasto", "error");
+        }
+      } catch(err) {
+        toast("Error de red", "error");
+      }
+    }
+
+    // --- Colaborador Actualizar Correo ---
+    async function handleCollabEmailUpdate(e) {
+      e.preventDefault();
+      const newEmail = document.getElementById('collab-new-email').value.trim();
+      try {
+        const res = await apiCall("actualizarEmailColaborador", { nuevoEmail: newEmail });
+        if (res && res.success) {
+          SESSION.email = res.email || newEmail;
+          localStorage.setItem("CP_EMAIL", SESSION.email);
+          toast("¡Correo actualizado! Te hemos enviado tu contraseña por email.", "success");
+        } else {
+          toast(res.error || "Error al actualizar correo", "error");
         }
       } catch (err) {
-        toast("Errore di rete", "error");
+        toast("Error de red", "error");
       }
     }
   </script>

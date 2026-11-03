@@ -1,7 +1,7 @@
 {
-  "name": "Calendario Pulizie",
-  "short_name": "Pulizie",
-  "description": "Gestione calendario pulizie e contabilità collaboratori",
+  "name": "Calendario de Limpiezas",
+  "short_name": "Limpiezas",
+  "description": "Gestión de calendario de limpiezas y contabilidad de colaboradores",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f172a",
@@ -26,6 +26,9 @@
       "type": "image/svg+xml"
     }
   ],
-  "categories": ["productivity", "business"],
-  "lang": "it"
+  "categories": [
+    "productivity",
+    "business"
+  ],
+  "lang": "es"
 }
