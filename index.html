@@ -1642,8 +1642,22 @@
     }
 
     // --- Inizializzazione Viste ---
+    async function checkBackendVersion() {
+      try {
+        const res = await apiCall("ping");
+        if (res && !res.backendVersion && !document.getElementById('backend-old-banner')) {
+          const b = document.createElement('div');
+          b.id = 'backend-old-banner';
+          b.style.cssText = 'background:#b45309;color:#fff;padding:10px 16px;font-size:0.85rem;text-align:center;';
+          b.innerHTML = '⚠️ El backend de Google Apps Script está desactualizado. Pega el nuevo <b>Code.gs</b> y en <b>Deploy → Gestionar implementaciones → Editar → Nueva versión</b> pulsa <b>Implementar</b>. <button style="margin-left:10px;padding:2px 10px;" onclick="this.parentNode.remove()">✕</button>';
+          document.body.insertBefore(b, document.body.firstChild);
+        }
+      } catch (e) {}
+    }
+
     async function initAdminView() {
       setDefaultFiltersToCurrentMonth();
+      checkBackendVersion();
       await loadAppConfig();
       loadAdminCalendario();
       checkAdminNotificaciones();
@@ -2453,32 +2467,62 @@
       openModal('modal-stato-cont');
     }
 
+    // Comprueba en el servidor (sin filtro de estado) que el periodo ha quedado realmente en el estado pedido
+    async function verifyEstadoPeriodo(r, estado) {
+      try {
+        const res = await apiCall("getContabilidad", { encargado: r.encargado, apartamento: r.apartamento, mes: r.mes, anno: r.anno });
+        const rows = (res && res.success) ? (res.rows || res.data || []) : [];
+        const f = rows.find(x =>
+          String(x.apartamento).toLowerCase() === String(r.apartamento).toLowerCase() &&
+          String(x.encargado).toUpperCase() === String(r.encargado).toUpperCase() &&
+          Number(x.mes) === Number(r.mes) && Number(x.anno) === Number(r.anno));
+        return !!f && String(f.estado || f.stato).toLowerCase() === estado;
+      } catch (e) {
+        return false;
+      }
+    }
+
     async function handleUpdateStatoCont(e) {
       e.preventDefault();
       const r = CURRENT_STATO_ROW;
+      if (!r) { toast("Periodo no identificado. Cierra y vuelve a abrir.", "error"); return; }
       const contId = document.getElementById('stato-cont-id').value;
       const estado = document.getElementById('stato-cont-estado').value;
       let fecha = document.getElementById('stato-cont-fecha').value;
       const notas = document.getElementById('stato-cont-notas').value;
       if (estado === 'pagado' && !fecha) fecha = new Date().toISOString().split('T')[0];
+      if (estado !== 'pagado' && !document.getElementById('stato-cont-fecha').value) fecha = '';
+
+      const full = {
+        encargado: r.encargado, mes: r.mes, anno: r.anno, apartamento: r.apartamento,
+        nLimpiezas: r.nLimpiezas, precioPorLimpieza: r.precioPorLimpieza, total: r.total,
+        email: r.email || ''
+      };
+      const btn = e.target.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.innerText = "Guardando..."; }
 
       try {
-        const res = await apiCall("updateEstadoContabilidad", {
-          contId: contId, estado: estado, fechaPago: fecha, notas: notas,
-          encargado: r ? r.encargado : '', mes: r ? r.mes : '', anno: r ? r.anno : '',
-          apartamento: r ? r.apartamento : '', nLimpiezas: r ? r.nLimpiezas : 0,
-          precioPorLimpieza: r ? r.precioPorLimpieza : 0, total: r ? r.total : 0,
-          email: r ? (r.email || '') : ''
-        });
-        if (res && res.success) {
+        // 1) Metodo normal
+        let res = await apiCall("updateEstadoContabilidad", Object.assign({ contId: contId, estado: estado, fechaPago: fecha, notas: notas }, full));
+        let ok = !!(res && res.success) && await verifyEstadoPeriodo(r, estado);
+
+        // 2) Alternativa (valida tambien con un backend antiguo): guardar el registro completo
+        if (!ok) {
+          res = await apiCall("saveContabilidad", { contData: Object.assign({ id: contId, estado: estado, fechaPago: fecha, notas: notas }, full) });
+          ok = !!(res && res.success) && await verifyEstadoPeriodo(r, estado);
+        }
+
+        if (ok) {
           closeModal('modal-stato-cont');
           toast(estado === 'pagado' ? "Periodo marcado como PAGADO" : "Periodo marcado como PENDIENTE", "success");
-          await loadAdminContabilita();
         } else {
-          toast((res && res.error) || "Error al actualizar", "error");
+          toast((res && res.error) || "No se pudo guardar el estado. Revisa que el backend esté desplegado con la última versión.", "error");
         }
+        await loadAdminContabilita();
       } catch (err) {
         toast("Error de red", "error");
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerText = "Guardar Estado"; }
       }
     }
 
