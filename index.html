@@ -553,6 +553,14 @@
               <option value="">Todos</option>
             </select>
           </div>
+          <div class="filter-group">
+            <span class="filter-label">Plataforma:</span>
+            <select id="admin-filter-plat" onchange="aplicarFiltroPlataforma()">
+              <option value="">Todas</option>
+              <option value="Booking">Booking</option>
+              <option value="Airbnb">Airbnb</option>
+            </select>
+          </div>
           <div style="display:flex; align-items:center; gap:10px; margin-left:auto;">
             <span class="badge" id="admin-dias-libres-badge" style="background:rgba(239,68,68,0.2); color:#f87171; border:1px solid #ef4444; font-weight:700; padding:6px 14px; font-size:0.84rem;">📅 Total Días Libres: 0</span>
             <button class="btn btn-primary" onclick="openModalAddRiga()">➕ Nueva Limpieza</button>
@@ -565,6 +573,7 @@
               <thead>
                 <tr>
                   <th>Apartamento</th>
+                  <th>Plataforma</th>
                   <th>Fecha Limpieza</th>
                   <th>Horario</th>
                   <th>Preparar Para</th>
@@ -577,7 +586,7 @@
                 </tr>
               </thead>
               <tbody id="tbody-admin-calendario">
-                <tr><td colspan="9" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando calendario...</td></tr>
+                <tr><td colspan="11" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando calendario...</td></tr>
               </tbody>
             </table>
           </div>
@@ -1086,6 +1095,11 @@
           <select id="riga-apt" required></select>
         </div>
         <div class="form-group">
+          <label>Plataforma</label>
+          <select id="riga-plat" onchange="onRigaPlatChange()"></select>
+          <input type="text" id="riga-plat-otra" maxlength="40" placeholder="Escribe la plataforma (ej: Vrbo, Directo…)" style="display:none; margin-top:8px;">
+        </div>
+        <div class="form-group">
           <label>Fecha Limpieza</label>
           <input type="date" id="riga-fecha" required>
         </div>
@@ -1411,6 +1425,7 @@
         case 'entrada': return r.entrada || r['ENTRADA PROXIMOS'] || r['Entrada'] || '-';
         case 'notas': return r.notas || r['NOTAS ADMIN'] || r['Notas'] || '-';
         case 'encargado': return r.encargado || r['ENCARGADO/A'] || r['ENCARGADO'] || r['Encargado'] || 'Sin asignar';
+        case 'plataforma': return (r.plataforma || r['PLAT.'] || '').toString().trim() || 'Booking';
         case 'notaEncargado': return r.notaEncargado || r['NOTA ENCARGADO'] || r['Nota Encargado'] || '';
         default: return r[field] || '';
       }
@@ -1904,19 +1919,20 @@
 
       const tbody = document.getElementById('tbody-admin-calendario');
       if (!isSilent) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando calendario...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando calendario...</td></tr>';
       }
 
       try {
         const res = await apiCall("getCalendario", { mes: mes, anno: anno, userFilter: enc, aptFilter: apt });
         if (res && res.success) {
           CURRENT_CALENDARIO_ROWS = res.rows || res.data || [];
-          renderAdminCalendarioTable(CURRENT_CALENDARIO_ROWS);
+          actualizarOpcionesPlataforma(CURRENT_CALENDARIO_ROWS);
+          renderAdminCalendarioTable(filtrarPorPlataforma(CURRENT_CALENDARIO_ROWS));
         } else {
-          if (!isSilent) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Error") + '</td></tr>';
+          if (!isSilent) tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Error") + '</td></tr>';
         }
       } catch (err) {
-        if (!isSilent) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--danger);">Error de conexión</td></tr>';
+        if (!isSilent) tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:30px; color:var(--danger);">Error de conexión</td></tr>';
       }
     }
 
@@ -1934,7 +1950,7 @@
       }
 
       if (!rows || rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:var(--text-muted);">No hay limpiezas registradas para este periodo y filtro</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:30px; color:var(--text-muted);">No hay limpiezas registradas para este periodo y filtro</td></tr>';
         return;
       }
 
@@ -1953,6 +1969,7 @@
 
         html += '<tr>';
         html += '<td><span class="badge badge-apt">' + apt + '</span></td>';
+        html += '<td>' + badgePlataforma(getCleanField(r, 'plataforma')) + '</td>';
         html += '<td><strong>' + fmtFechaES(fecha) + '</strong></td>';
         html += '<td>' + (horario !== '-' ? horario : '10:00') + '</td>';
         html += '<td>' + preparar + '</td>';
@@ -1975,6 +1992,87 @@
       });
 
       tbody.innerHTML = html;
+    }
+
+    // --- Plataforma (solo administrador) ---
+    const PLAT_BASE = ['Booking', 'Airbnb'];
+    let PLAT_EXTRA = [];   // plataformas personalizadas vistas durante la sesión
+
+    function normPlat(v) {
+      const t = (v === undefined || v === null) ? '' : String(v).trim();
+      if (!t) return 'Booking';
+      const l = t.toLowerCase();
+      if (l === 'booking' || l === 'booking.com') return 'Booking';
+      if (l === 'airbnb') return 'Airbnb';
+      return t;
+    }
+
+    function badgePlataforma(nombre) {
+      const n = normPlat(nombre);
+      let st = 'background:rgba(148,163,184,0.15); color:#cbd5e1; border:1px solid rgba(148,163,184,0.4);';
+      if (n === 'Booking') st = 'background:rgba(56,130,246,0.18); color:#7db3ff; border:1px solid rgba(56,130,246,0.5);';
+      else if (n === 'Airbnb') st = 'background:rgba(255,90,95,0.16); color:#ff8a8e; border:1px solid rgba(255,90,95,0.5);';
+      return '<span class="badge" style="' + st + ' font-weight:700;">' + escHtml(n) + '</span>';
+    }
+
+    function registrarPlataformasExtra(rows) {
+      (rows || []).forEach(r => {
+        const n = normPlat(r && (r.plataforma || r['PLAT.']));
+        if (!PLAT_BASE.includes(n) && !PLAT_EXTRA.some(x => x.toLowerCase() === n.toLowerCase())) PLAT_EXTRA.push(n);
+      });
+    }
+
+    // Rellena el desplegable del filtro con Booking, Airbnb y las personalizadas que existan
+    function actualizarOpcionesPlataforma(rows) {
+      registrarPlataformasExtra(rows);
+      const sel = document.getElementById('admin-filter-plat');
+      if (!sel) return;
+      const cur = sel.value;
+      let h = '<option value="">Todas</option>';
+      PLAT_BASE.concat(PLAT_EXTRA).forEach(n => { h += '<option value="' + escHtml(n) + '">' + escHtml(n) + '</option>'; });
+      sel.innerHTML = h;
+      sel.value = Array.from(sel.options).some(o => o.value === cur) ? cur : '';
+    }
+
+    function filtrarPorPlataforma(rows) {
+      const f = (document.getElementById('admin-filter-plat') || {}).value || '';
+      if (!f) return rows || [];
+      return (rows || []).filter(r => normPlat(r.plataforma || r['PLAT.']).toLowerCase() === f.toLowerCase());
+    }
+
+    function aplicarFiltroPlataforma() {
+      renderAdminCalendarioTable(filtrarPorPlataforma(CURRENT_CALENDARIO_ROWS));
+    }
+
+    // Desplegable del modal: Booking / Airbnb / personalizadas conocidas / Otra (escribir)
+    function poblarSelectPlataformaModal(valor) {
+      const sel = document.getElementById('riga-plat');
+      const otra = document.getElementById('riga-plat-otra');
+      if (!sel) return;
+      const v = normPlat(valor);
+      if (!PLAT_BASE.includes(v) && !PLAT_EXTRA.some(x => x.toLowerCase() === v.toLowerCase())) PLAT_EXTRA.push(v);
+      let h = '';
+      PLAT_BASE.concat(PLAT_EXTRA).forEach(n => { h += '<option value="' + escHtml(n) + '">' + escHtml(n) + '</option>'; });
+      h += '<option value="__otra__">✏️ Otra (escribir)…</option>';
+      sel.innerHTML = h;
+      sel.value = v;
+      if (otra) { otra.value = ''; otra.style.display = 'none'; otra.required = false; }
+    }
+
+    function onRigaPlatChange() {
+      const sel = document.getElementById('riga-plat');
+      const otra = document.getElementById('riga-plat-otra');
+      const esOtra = sel.value === '__otra__';
+      otra.style.display = esOtra ? 'block' : 'none';
+      otra.required = esOtra;
+      if (esOtra) otra.focus();
+    }
+
+    function leerPlataformaModal() {
+      const sel = document.getElementById('riga-plat');
+      if (!sel) return 'Booking';
+      if (sel.value === '__otra__') return normPlat(document.getElementById('riga-plat-otra').value);
+      return normPlat(sel.value);
     }
 
     function calcularDiasLibresModal() {
@@ -2001,6 +2099,7 @@
       document.getElementById('modal-riga-title').innerText = "Nueva Limpieza";
       document.getElementById('riga-id').value = "";
       document.getElementById('riga-apt').value = "";
+      poblarSelectPlataformaModal('Booking');
 
       const curMes = document.getElementById('admin-filter-mes').value || ((new Date().getMonth()+1)+'');
       const curAnno = document.getElementById('admin-filter-anno').value || (new Date().getFullYear()+'');
@@ -2028,6 +2127,7 @@
       document.getElementById('modal-riga-title').innerText = "Modificar Limpieza";
       document.getElementById('riga-id').value = getCleanField(r, 'id');
       document.getElementById('riga-apt').value = getCleanField(r, 'apartamento') !== '-' ? getCleanField(r, 'apartamento') : '';
+      poblarSelectPlataformaModal(getCleanField(r, 'plataforma'));
 
       const fLimp = getCleanField(r, 'fecha') !== '-' ? getCleanField(r, 'fecha') : '';
       document.getElementById('riga-fecha').value = fLimp;
@@ -2108,6 +2208,7 @@
       const rowData = {
         id: document.getElementById('riga-id').value,
         apartamento: document.getElementById('riga-apt').value,
+        plataforma: leerPlataformaModal(),
         fecha: fLimp,
         horario: document.getElementById('riga-horario').value || "10:00",
         preparar: document.getElementById('riga-preparar').value,
