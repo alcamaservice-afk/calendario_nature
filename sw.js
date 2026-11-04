@@ -1,5 +1,5 @@
 // Calendario Pulizie - Service Worker v5 (Clean bypass of cross-origin API)
-const CACHE_NAME = 'limpiezas-v8-cache';
+const CACHE_NAME = 'limpiezas-v9-cache';
 const STATIC_ASSETS = [
   './',
   './index.html',

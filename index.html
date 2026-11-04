@@ -1965,7 +1965,8 @@
       try {
         const res = await apiCall("getUsuarios");
         if (res && res.success) {
-          CURRENT_USERS_LIST = res.users || res.data || [];
+          const raw = res.users || res.data || [];
+          CURRENT_USERS_LIST = raw.filter(u => u.activo !== false && u.activo !== "FALSE" && u.activo !== "");
           renderAdminUtentiTable(CURRENT_USERS_LIST);
         } else {
           tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Error") + '</td></tr>';
@@ -1977,12 +1978,14 @@
 
     function renderAdminUtentiTable(utenti) {
       const tbody = document.getElementById('tbody-admin-utenti');
-      if (!utenti || utenti.length === 0) {
+      // Solo mostrar colaboradores activos
+      const lista = (utenti || []).filter(u => u.activo !== false && u.activo !== "FALSE" && u.activo !== "");
+      if (lista.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">No hay colaboradores registrados</td></tr>';
         return;
       }
       let html = '';
-      utenti.forEach(u => {
+      lista.forEach(u => {
         const isBlocked = u.bloqueado === true;
         const tarifa = (u.precioLimpieza || 40).toFixed(2);
         html += '<tr>';
@@ -2169,24 +2172,27 @@
         toast("No se puede eliminar el administrador principal", "error");
         return;
       }
-      if (!confirm("¿Seguro que deseas eliminar esta cuenta (" + email + ") permanentemente?\n\nEsta acción no se puede deshacer.")) return;
+      if (!confirm("¿Seguro que deseas eliminar a " + email + "?\n\nEsta acción no se puede deshacer.")) return;
+
+      // Actualización visual inmediata (optimista)
+      CURRENT_USERS_LIST = CURRENT_USERS_LIST.filter(u => (u.email || '').toLowerCase() !== email.toLowerCase());
+      renderAdminUtentiTable(CURRENT_USERS_LIST);
+
       try {
-        // Try eliminarUsuario first (supported on all backend versions)
         let res = await apiCall("eliminarUsuario", { id: email });
         if (!res || !res.success) {
-          // Fallback to eliminarUsuarioPermanente
           res = await apiCall("eliminarUsuarioPermanente", { id: email });
         }
         if (res && res.success) {
-          toast("Usuario eliminado permanentemente", "success");
-          CURRENT_USERS_LIST = CURRENT_USERS_LIST.filter(u => (u.email || '').toLowerCase() !== email.toLowerCase());
-          renderAdminUtentiTable(CURRENT_USERS_LIST);
-          loadAdminUtenti();
+          toast("Colaborador eliminado correctamente", "success");
+          await loadAdminUtenti();
         } else {
-          toast(res.error || "Error al eliminar usuario", "error");
+          toast(res.error || "Error al eliminar", "error");
+          await loadAdminUtenti();
         }
       } catch (err) {
         toast("Error de conexión al eliminar", "error");
+        await loadAdminUtenti();
       }
     }
 
@@ -2204,10 +2210,14 @@
 
       // Fallback: Delete one-by-one from frontend (works on all backend versions)
       try {
+        const allowedKeys = ['DANIELA', 'LINA', 'LEVYS'];
+        const allowedEmails = ['mlogamba@gmail.com', 'lina@pulizie.app', 'levys@pulizie.app', 'alcamaservice@gmail.com'];
         const targets = CURRENT_USERS_LIST.filter(u => {
           const em = (u.email || '').toLowerCase();
-          const role = (u.role || '').toLowerCase();
-          return em !== 'alcamaservice@gmail.com' && (em.endsWith('@pulizie.app') || role === 'admin');
+          const key = (u.encargadoKey || '').toUpperCase();
+          if (em === 'alcamaservice@gmail.com') return false;
+          if (allowedKeys.includes(key) || allowedEmails.includes(em)) return false;
+          return true; // Delete any others (Alejandra, Marcello, fake admin)
         });
 
         if (targets.length === 0) {
