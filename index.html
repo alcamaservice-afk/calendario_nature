@@ -1242,6 +1242,15 @@
   <script>
     const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxpUbcKCoxEqKB6rBy2FvW_FQXVROdl6Gkakc9gtXhpDswRdXtml2M4eyXF5XOj340AA/exec";
     let SCRIPT_URL = (localStorage.getItem("CP_SCRIPT_URL") || DEFAULT_SCRIPT_URL).trim();
+    const DEFAULT_PERMISOS = {
+      verHorario: true, verPrepararPara: true, verEntradaProximos: true, verNotasAdmin: true,
+      verDiasLibres: true, verPlataforma: true, verContabilidad: true, puedeAgregarGastos: true
+    };
+
+    function escHtml(v) {
+      return String(v === null || v === undefined ? '' : v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
 
     let SESSION = {
       token: localStorage.getItem("CP_TOKEN") || null,
@@ -1360,6 +1369,7 @@
         });
         const json = await response.json();
         setSyncing(false);
+        checkSessionError(action, json);
         return json;
       } catch (postErr) {
         console.warn("POST apiCall fallido, intentando con GET...", postErr);
@@ -1514,18 +1524,67 @@
       }
     }
 
+    let SESSION_RECOVERING = false;
+
+    function clearLocalSession() {
+      SESSION = { token: null, email: null, nombre: null, role: null, encargadoKey: null, permisos: DEFAULT_PERMISOS, precioLimpieza: 40 };
+      ["CP_TOKEN", "CP_EMAIL", "CP_NOMBRE", "CP_ROLE", "CP_ENCKEY", "CP_PERMISOS", "CP_PRECIO"].forEach(k => localStorage.removeItem(k));
+      LAST_VERSION = null;
+      UNREAD_NOTIF_IDS = [];
+      closeModal('modal-notificaciones');
+    }
+
     async function appLogout() {
       try { await apiCall("logout"); } catch(e){}
-      SESSION = { token: null, email: null, nombre: null, role: null, encargadoKey: null, permisos: DEFAULT_PERMISOS, precioLimpieza: 40 };
-      localStorage.removeItem("CP_TOKEN");
-      localStorage.removeItem("CP_EMAIL");
-      localStorage.removeItem("CP_NOMBRE");
-      localStorage.removeItem("CP_ROLE");
-      localStorage.removeItem("CP_ENCKEY");
-      localStorage.removeItem("CP_PERMISOS");
-      localStorage.removeItem("CP_PRECIO");
+      clearLocalSession();
       toast("Sesión cerrada", "info");
       showLoginView();
+    }
+
+    function checkSessionError(action, json) {
+      try {
+        if (!json || json.success !== false) return;
+        if (json.error !== "Sesión no válida") return;
+        if (action === "login" || action === "logout" || action === "verificarSesion") return;
+        if (!SESSION || !SESSION.token) return;
+        handleSessionExpired();
+      } catch (e) {}
+    }
+
+    // La sesion del servidor ha caducado: se intenta renovarla en silencio con las credenciales guardadas
+    async function handleSessionExpired() {
+      if (SESSION_RECOVERING) return;
+      SESSION_RECOVERING = true;
+      try {
+        const email = localStorage.getItem("CP_SAVED_EMAIL");
+        const pwd = localStorage.getItem("CP_SAVED_PWD");
+        if (email && pwd) {
+          const res = await apiCall("login", { email: email, password: pwd });
+          if (res && res.success) {
+            const u = res.user || res;
+            SESSION.token = res.token;
+            SESSION.email = u.email || SESSION.email;
+            SESSION.nombre = u.nombre || SESSION.nombre;
+            SESSION.role = u.role || SESSION.role;
+            SESSION.encargadoKey = u.encargadoKey || SESSION.encargadoKey;
+            SESSION.permisos = u.permisos || DEFAULT_PERMISOS;
+            SESSION.precioLimpieza = u.precioLimpieza || 40;
+            localStorage.setItem("CP_TOKEN", SESSION.token);
+            localStorage.setItem("CP_ROLE", SESSION.role);
+            localStorage.setItem("CP_PERMISOS", JSON.stringify(SESSION.permisos));
+            LAST_VERSION = null;
+            PENDING_REFRESH = true;
+            return;
+          }
+        }
+        clearLocalSession();
+        toast("Tu sesión ha caducado. Inicia sesión de nuevo.", "error");
+        showLoginView();
+      } catch (e) {
+        console.warn("handleSessionExpired:", e);
+      } finally {
+        SESSION_RECOVERING = false;
+      }
     }
 
     function salvaScriptUrl() {
@@ -1628,87 +1687,74 @@
       } catch(e) {}
     }
 
-    async function checkAdminNotificaciones() {
-      if (!SESSION || !SESSION.token || SESSION.role !== 'admin') return;
-      try {
-        const res = await apiCall("getNotificaciones");
-        if (res && res.success && Array.isArray(res.notificaciones) && res.notificaciones.length > 0) {
-          const isNew = res.notificaciones.length !== LAST_SEEN_NOTIF_COUNT;
-          UNREAD_NOTIF_IDS = res.notificaciones.map(n => n.id);
-          LAST_SEEN_NOTIF_COUNT = res.notificaciones.length;
+    const PENDING_READ = new Set();
 
-          const container = document.getElementById('notif-list-container');
-          const title = document.getElementById('notif-modal-title');
-          const sub = document.getElementById('notif-modal-sub');
-          if (title) title.innerText = "🔔 Notificaciones del Administrador";
-          if (sub) sub.innerText = "Actividad reciente de los colaboradores (nuevos gastos, notas):";
+    function mostrarNotificaciones(list) {
+      if (!SESSION || !SESSION.token || !Array.isArray(list)) return;
+      const items = list.filter(n => n && !PENDING_READ.has(String(n.id)));
+      if (items.length === 0) return;
 
-          let listHtml = '';
-          res.notificaciones.forEach(n => {
-            listHtml += '<div class="notif-item" style="padding:10px 0; border-bottom:1px solid var(--surface-border); margin-bottom:8px;">';
-            listHtml += '<div class="notif-msg" style="font-weight:600; font-size:0.92rem; color:var(--text);">📢 ' + n.mensaje + '</div>';
-            if (n.fechaLimpieza) listHtml += '<div style="font-size:0.8rem; color:var(--primary); margin-top:2px;">Fecha asociada: ' + n.fechaLimpieza + '</div>';
-            listHtml += '<div class="notif-time" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">' + (n.creado || '') + '</div>';
-            listHtml += '</div>';
-          });
-          if (container) container.innerHTML = listHtml;
-          openModal('modal-notificaciones');
-          if (isNew) {
-            playNotifSound();
-            toast("🔔 Nuevas actividades de colaboradores", "info");
-          }
-        } else {
-          LAST_SEEN_NOTIF_COUNT = 0;
-        }
-      } catch(e) {
-        console.warn("Error comprobando notificaciones admin:", e);
+      // Si el usuario esta editando algo en otro modal, se muestran en el siguiente ciclo
+      const other = document.querySelector('.modal-overlay.active:not(#modal-notificaciones)');
+      if (other) return;
+
+      const isAdmin = SESSION.role === 'admin';
+      const known = new Set(UNREAD_NOTIF_IDS);
+      const hasNew = items.some(n => !known.has(String(n.id)));
+      UNREAD_NOTIF_IDS = items.map(n => String(n.id));
+      LAST_SEEN_NOTIF_COUNT = items.length;
+
+      const title = document.getElementById('notif-modal-title');
+      const sub = document.getElementById('notif-modal-sub');
+      if (title) title.innerText = isAdmin ? "🔔 Notificaciones del Administrador" : "🔔 Nuevos Cambios en tu Calendario";
+      if (sub) sub.innerText = isAdmin
+        ? "Actividad reciente de los colaboradores (nuevos gastos, notas):"
+        : "El administrador ha realizado cambios o notas en tus limpiezas o gastos:";
+
+      let listHtml = '';
+      items.forEach(n => {
+        listHtml += '<div class="notif-item" style="padding:10px 0; border-bottom:1px solid var(--surface-border); margin-bottom:8px;">';
+        listHtml += '<div class="notif-msg" style="font-weight:600; font-size:0.92rem; color:var(--text);">' + (isAdmin ? '📢 ' : '🧹 ') + escHtml(n.mensaje) + '</div>';
+        if (n.fechaLimpieza) listHtml += '<div style="font-size:0.8rem; color:var(--primary); margin-top:2px;">Fecha asociada: ' + escHtml(n.fechaLimpieza) + '</div>';
+        listHtml += '<div class="notif-time" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">' + escHtml(n.creado || '') + '</div>';
+        listHtml += '</div>';
+      });
+      const container = document.getElementById('notif-list-container');
+      if (container) container.innerHTML = listHtml;
+
+      const modalEl = document.getElementById('modal-notificaciones');
+      const alreadyOpen = modalEl && modalEl.classList.contains('active');
+      if (!alreadyOpen) openModal('modal-notificaciones');
+      if (hasNew) {
+        playNotifSound();
+        toast(isAdmin ? "🔔 Nuevas actividades de colaboradores" : "🔔 Tienes nuevas notificaciones de limpieza", "info");
       }
     }
 
-    async function checkCollabNotificaciones() {
-      if (!SESSION || !SESSION.token || SESSION.role === 'admin') return;
+    async function pullNotificaciones() {
+      if (!SESSION || !SESSION.token) return;
       try {
         const res = await apiCall("getNotificaciones");
-        if (res && res.success && Array.isArray(res.notificaciones) && res.notificaciones.length > 0) {
-          const isNew = res.notificaciones.length !== LAST_SEEN_NOTIF_COUNT;
-          UNREAD_NOTIF_IDS = res.notificaciones.map(n => n.id);
-          LAST_SEEN_NOTIF_COUNT = res.notificaciones.length;
-
-          const container = document.getElementById('notif-list-container');
-          const title = document.getElementById('notif-modal-title');
-          const sub = document.getElementById('notif-modal-sub');
-          if (title) title.innerText = "🔔 Nuevos Cambios en tu Calendario";
-          if (sub) sub.innerText = "El administrador ha realizado cambios o notas en tus limpiezas o gastos:";
-
-          let listHtml = '';
-          res.notificaciones.forEach(n => {
-            listHtml += '<div class="notif-item" style="padding:10px 0; border-bottom:1px solid var(--surface-border); margin-bottom:8px;">';
-            listHtml += '<div class="notif-msg" style="font-weight:600; font-size:0.92rem; color:var(--text);">🧹 ' + n.mensaje + '</div>';
-            if (n.fechaLimpieza) listHtml += '<div style="font-size:0.8rem; color:var(--primary); margin-top:2px;">Fecha: ' + n.fechaLimpieza + '</div>';
-            listHtml += '<div class="notif-time" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">' + (n.creado || '') + '</div>';
-            listHtml += '</div>';
-          });
-          if (container) container.innerHTML = listHtml;
-          openModal('modal-notificaciones');
-          if (isNew) {
-            playNotifSound();
-            toast("🔔 Tienes nuevas notificaciones de limpieza", "info");
-          }
-        } else {
-          LAST_SEEN_NOTIF_COUNT = 0;
-        }
-      } catch(e) {
-        console.warn("Error comprobando notificaciones collab:", e);
+        if (res && res.success) mostrarNotificaciones(res.notificaciones || []);
+      } catch (e) {
+        console.warn("Error comprobando notificaciones:", e);
       }
     }
+
+    async function checkAdminNotificaciones() { if (SESSION && SESSION.role === 'admin') await pullNotificaciones(); }
+    async function checkCollabNotificaciones() { if (SESSION && SESSION.role !== 'admin') await pullNotificaciones(); }
 
     async function closeModalNotificaciones() {
       closeModal('modal-notificaciones');
-      if (UNREAD_NOTIF_IDS.length > 0) {
-        try {
-          await apiCall("marcarNotificacionesLeidas", { ids: UNREAD_NOTIF_IDS });
-          UNREAD_NOTIF_IDS = [];
-        } catch(e) {}
+      const ids = UNREAD_NOTIF_IDS.slice();
+      UNREAD_NOTIF_IDS = [];
+      if (ids.length === 0) return;
+      ids.forEach(id => PENDING_READ.add(id));
+      try {
+        const r = await apiCall("marcarNotificacionesLeidas", { ids: ids });
+        if (!r || !r.success) ids.forEach(id => PENDING_READ.delete(id));
+      } catch (e) {
+        ids.forEach(id => PENDING_READ.delete(id));
       }
     }
 
@@ -1845,7 +1891,7 @@
         html += '</tr>';
       });
 
-      if (tbody.innerHTML !== html) if (tbody.innerHTML !== html) if (tbody.innerHTML !== html) tbody.innerHTML = html;
+      tbody.innerHTML = html;
     }
 
     function calcularDiasLibresModal() {
@@ -2156,7 +2202,7 @@
       try {
         const res = await apiCall("syncExistingCollaborators");
         if (res && res.success) {
-          toast("¡Sincronización completada! Añadidos " + (res.createdCount || 0) + " colaboradores.", "success");
+          toast("¡Sincronización completada! Añadidos " + (res.sincronizados || 0) + " colaboradores.", "success");
           loadAdminUtenti();
         } else {
           toast(res.error || "Error de sincronización", "error");
@@ -2382,36 +2428,54 @@
         html += '<td>' + (c.fechaPago || '-') + '</td>';
         html += '<td style="color:var(--text-muted); font-size:0.8rem;">' + (c.notas || '-') + '</td>';
         html += '<td style="text-align:right;">';
-        html += '<button class="btn btn-sm" onclick="openModalStatoCont(\'' + c.id + '\', \'' + (c.estado||c.stato) + '\', \'' + (c.fechaPago||'') + '\', \'' + (c.notas||'').replace(/'/g, "\\'") + '\')">✏️ Estado</button>';
+        html += '<button class="btn btn-sm" onclick="openModalStatoCont(\'' + c.id + '\')">✏️ Estado</button>';
         html += '</td>';
         html += '</tr>';
       });
       tbody.innerHTML = html;
     }
 
-    function openModalStatoCont(id, estado, fecha, notas) {
-      document.getElementById('stato-cont-id').value = id;
-      document.getElementById('stato-cont-estado').value = (estado === 'pagado') ? 'pagado' : 'pendiente';
-      document.getElementById('stato-cont-fecha').value = fecha || "";
-      document.getElementById('stato-cont-notas').value = notas || "";
+    let CURRENT_STATO_ROW = null;
+
+    function openModalStatoCont(id) {
+      const r = (CURRENT_CONTABILIDAD_ROWS || []).find(x => String(x.id) === String(id));
+      if (!r) {
+        toast("No se encontró el periodo. Actualiza la lista e inténtalo de nuevo.", "error");
+        return;
+      }
+      CURRENT_STATO_ROW = r;
+      const isPag = (r.estado === 'pagado' || r.stato === 'pagado');
+      const f = (r.fechaPago || '');
+      document.getElementById('stato-cont-id').value = r.id;
+      document.getElementById('stato-cont-estado').value = isPag ? 'pagado' : 'pendiente';
+      document.getElementById('stato-cont-fecha').value = /^\d{4}-\d{2}-\d{2}$/.test(f) ? f : '';
+      document.getElementById('stato-cont-notas').value = r.notas || "";
       openModal('modal-stato-cont');
     }
 
     async function handleUpdateStatoCont(e) {
       e.preventDefault();
+      const r = CURRENT_STATO_ROW;
       const contId = document.getElementById('stato-cont-id').value;
       const estado = document.getElementById('stato-cont-estado').value;
-      const fecha = document.getElementById('stato-cont-fecha').value;
+      let fecha = document.getElementById('stato-cont-fecha').value;
       const notas = document.getElementById('stato-cont-notas').value;
+      if (estado === 'pagado' && !fecha) fecha = new Date().toISOString().split('T')[0];
 
       try {
-        const res = await apiCall("updateEstadoContabilidad", { contId: contId, estado: estado, fechaPago: fecha, notas: notas });
+        const res = await apiCall("updateEstadoContabilidad", {
+          contId: contId, estado: estado, fechaPago: fecha, notas: notas,
+          encargado: r ? r.encargado : '', mes: r ? r.mes : '', anno: r ? r.anno : '',
+          apartamento: r ? r.apartamento : '', nLimpiezas: r ? r.nLimpiezas : 0,
+          precioPorLimpieza: r ? r.precioPorLimpieza : 0, total: r ? r.total : 0,
+          email: r ? (r.email || '') : ''
+        });
         if (res && res.success) {
           closeModal('modal-stato-cont');
-          toast("Estado de pago guardado", "success");
-          loadAdminContabilita();
+          toast(estado === 'pagado' ? "Periodo marcado como PAGADO" : "Periodo marcado como PENDIENTE", "success");
+          await loadAdminContabilita();
         } else {
-          toast(res.error || "Error al actualizar", "error");
+          toast((res && res.error) || "Error al actualizar", "error");
         }
       } catch (err) {
         toast("Error de red", "error");
@@ -3091,28 +3155,63 @@
     }
   
     // --- Auto-refresco en segundo plano cada 10 segundos con sincronización limpia ---
-    async function backgroundAutoRefresh() {
-      if (!SESSION || !SESSION.token) return;
-      const openModal = document.querySelector('.modal-overlay.active');
-      // No interrumpir si el usuario está editando activamente un formulario
-      if (openModal && openModal.id !== 'modal-notificaciones') return;
+    let LAST_VERSION = null;
+    let REFRESH_BUSY = false;
+    let PENDING_REFRESH = false;
+    let LEGACY_POLLING = false;
 
-      try {
-        if (SESSION.role === 'admin') {
-          if (ACTIVE_ADMIN_TAB === 'calendario') await loadAdminCalendario(true);
-          else if (ACTIVE_ADMIN_TAB === 'collaboratori') await loadAdminUtenti(true);
-          else if (ACTIVE_ADMIN_TAB === 'contabilita') await loadAdminContabilita(true);
-          await checkAdminNotificaciones();
-        } else {
-          if (ACTIVE_COLLAB_TAB === 'calendario') await loadCollabCalendario(true);
-          else if (ACTIVE_COLLAB_TAB === 'compensi') await loadCollabCompensi(true);
-          await checkCollabNotificaciones();
-        }
-      } catch(e) {
-        console.warn("Auto-refresh error:", e);
+    async function refreshActiveView() {
+      if (SESSION.role === 'admin') {
+        if (ACTIVE_ADMIN_TAB === 'calendario') await loadAdminCalendario(true);
+        else if (ACTIVE_ADMIN_TAB === 'collaboratori') await loadAdminUtenti(true);
+        else if (ACTIVE_ADMIN_TAB === 'contabilita') await loadAdminContabilita(true);
+      } else {
+        if (ACTIVE_COLLAB_TAB === 'calendario') await loadCollabCalendario(true);
+        else if (ACTIVE_COLLAB_TAB === 'compensi') await loadCollabCompensi(true);
       }
     }
-    setInterval(backgroundAutoRefresh, 10000);
+
+    // Cada pocos segundos pregunta al servidor si hay cambios (version) y notificaciones nuevas.
+    async function backgroundAutoRefresh() {
+      if (!SESSION || !SESSION.token || REFRESH_BUSY || SESSION_RECOVERING) return;
+      REFRESH_BUSY = true;
+      try {
+        let res = null;
+        if (!LEGACY_POLLING) {
+          res = await apiCall("getUpdates");
+          if (res && res.success === false && /no reconocida/i.test(res.error || "")) {
+            LEGACY_POLLING = true;   // backend antiguo: se usa el modo clasico
+            res = null;
+          } else if (!res || res.success === false) {
+            return;
+          }
+        }
+
+        let changed = true;
+        if (res) {
+          const v = String(res.version);
+          changed = (LAST_VERSION !== null && v !== LAST_VERSION);
+          LAST_VERSION = v;
+          mostrarNotificaciones(res.notificaciones || []);
+        } else {
+          await pullNotificaciones();
+        }
+
+        if (changed) PENDING_REFRESH = true;
+        if (PENDING_REFRESH) {
+          const blocking = document.querySelector('.modal-overlay.active:not(#modal-notificaciones)');
+          if (!blocking) {
+            PENDING_REFRESH = false;
+            await refreshActiveView();
+          }
+        }
+      } catch (e) {
+        console.warn("Auto-refresh error:", e);
+      } finally {
+        REFRESH_BUSY = false;
+      }
+    }
+    setInterval(backgroundAutoRefresh, 8000);
 
     // Refresco instantáneo al volver a la pestaña
     document.addEventListener('visibilitychange', () => {

@@ -1,5 +1,5 @@
 // Calendario Pulizie - Service Worker v12 (Network-first for HTML, offline cache fallback)
-const CACHE_NAME = 'limpiezas-v14-cache';
+const CACHE_NAME = 'limpiezas-v15-cache';
 const STATIC_ASSETS = [
   './',
   './index.html',
