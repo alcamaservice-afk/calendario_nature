@@ -1276,7 +1276,17 @@
 
   <!-- ==================== APPLICATION SCRIPT ==================== -->
   <script>
-    const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxpUbcKCoxEqKB6rBy2FvW_FQXVROdl6Gkakc9gtXhpDswRdXtml2M4eyXF5XOj340AA/exec";
+    const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9arRw4RHtfTe-igPaIn9isV18JuSESaDfceBne66WlYw_AzdVtJD9zIHeyEjL__-Qeg/exec";
+    // URL antiguas: si un dispositivo las tiene guardadas, se migran automáticamente a la actual
+    const OLD_SCRIPT_URLS = [
+      "https://script.google.com/macros/s/AKfycbwxpUbcKCoxEqKB6rBy2FvW_FQXVROdl6Gkakc9gtXhpDswRdXtml2M4eyXF5XOj340AA/exec"
+    ];
+    (function migrateScriptUrl() {
+      try {
+        const saved = (localStorage.getItem("CP_SCRIPT_URL") || "").trim();
+        if (saved && OLD_SCRIPT_URLS.indexOf(saved) !== -1) localStorage.setItem("CP_SCRIPT_URL", DEFAULT_SCRIPT_URL);
+      } catch (e) {}
+    })();
     let SCRIPT_URL = (localStorage.getItem("CP_SCRIPT_URL") || DEFAULT_SCRIPT_URL).trim();
     const DEFAULT_PERMISOS = {
       verHorario: true, verPrepararPara: true, verEntradaProximos: true, verNotasAdmin: true,
