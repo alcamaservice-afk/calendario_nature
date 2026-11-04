@@ -1161,7 +1161,7 @@
       <form onsubmit="handleCreateUser(event)">
         <div class="form-group">
           <label>Correo Electrónico</label>
-          <input type="email" id="user-email" required placeholder="colaborador@pulizie.app">
+          <input type="email" id="user-email" required placeholder="colaborador@correo.com">
         </div>
         <div class="form-group">
           <label>Nombre Completo</label>
@@ -1282,6 +1282,22 @@
       verHorario: true, verPrepararPara: true, verEntradaProximos: true, verNotasAdmin: true,
       verDiasLibres: true, verPlataforma: true, verContabilidad: true, puedeAgregarGastos: true
     };
+
+    const DIAS_ES_ABR = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
+    const MESES_ES_ABR = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    // 2026-10-11 -> "Dom 11 oct 2026"
+    function fmtFechaES(v) {
+      const t = String(v === null || v === undefined ? '' : v).trim();
+      const m = /^(\d{4})-(\d{2})-(\d{2})(?!\d)/.exec(t);
+      if (!m) return t;
+      const y = parseInt(m[1], 10), mo = parseInt(m[2], 10), d = parseInt(m[3], 10);
+      const dt = new Date(y, mo - 1, d);
+      return DIAS_ES_ABR[dt.getDay()] + ' ' + d + ' ' + MESES_ES_ABR[mo - 1] + ' ' + y + t.slice(m[0].length);
+    }
+    // Sustituye todas las fechas yyyy-MM-dd dentro de un texto
+    function fmtTextoFechas(v) {
+      return String(v === null || v === undefined ? '' : v).replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g, (x) => fmtFechaES(x));
+    }
 
     function escHtml(v) {
       return String(v === null || v === undefined ? '' : v)
@@ -1630,6 +1646,7 @@
       localStorage.setItem("CP_SCRIPT_URL", val);
       closeModal('modal-script-url');
       toast("URL del script actualizada", "success");
+      if (SESSION && SESSION.token && SESSION.role === 'admin') checkBackendVersion();
     }
 
     // --- Tab Navigation ---
@@ -1681,13 +1698,23 @@
     async function checkBackendVersion() {
       try {
         const res = await apiCall("ping");
-        if (res && !/^5\.[4-9]/.test(String(res.backendVersion || '')) && !document.getElementById('backend-old-banner')) {
-          const b = document.createElement('div');
-          b.id = 'backend-old-banner';
-          b.style.cssText = 'background:#b45309;color:#fff;padding:10px 16px;font-size:0.85rem;text-align:center;';
-          b.innerHTML = '⚠️ El backend de Google Apps Script está desactualizado. Pega el nuevo <b>Code.gs</b> y en <b>Deploy → Gestionar implementaciones → Editar → Nueva versión</b> pulsa <b>Implementar</b>. <button style="margin-left:10px;padding:2px 10px;" onclick="this.parentNode.remove()">✕</button>';
-          document.body.insertBefore(b, document.body.firstChild);
-        }
+        const old = document.getElementById('backend-old-banner');
+        const okVersion = res && /^5\.[4-9]/.test(String(res.backendVersion || ''));
+        if (okVersion) { if (old) old.remove(); return; }
+        if (old) return;
+        const detectada = (res && res.backendVersion) ? res.backendVersion : 'muy antigua (sin versión)';
+        const idMatch = /\/s\/([^\/]+)\//.exec(SCRIPT_URL);
+        const idCorto = idMatch ? (idMatch[1].slice(0, 8) + '…' + idMatch[1].slice(-6)) : SCRIPT_URL;
+        const b = document.createElement('div');
+        b.id = 'backend-old-banner';
+        b.style.cssText = 'background:#b45309;color:#fff;padding:10px 16px;font-size:0.85rem;text-align:center;line-height:1.5;';
+        b.innerHTML = '⚠️ El backend de Google Apps Script está desactualizado (versión detectada: <b>' + escHtml(detectada) + '</b>; se necesita 5.4 o superior). ' +
+          'La app está conectada a la implementación <b>' + escHtml(idCorto) + '</b>. ' +
+          'Si has creado una <b>implementación nueva</b>, su URL es distinta: pégala en ' +
+          '<a href="#" style="color:#fff;font-weight:700;" onclick="openModal(\'modal-script-url\'); return false;">⚙️ Configuración de Conexión</a>. ' +
+          'Si has editado la existente, asegúrate de elegir <b>Nueva versión</b> en esa misma implementación. ' +
+          '<button style="margin-left:10px;padding:2px 10px;" onclick="this.parentNode.remove()">✕</button>';
+        document.body.insertBefore(b, document.body.firstChild);
       } catch (e) {}
     }
 
@@ -1760,8 +1787,8 @@
       let listHtml = '';
       items.forEach(n => {
         listHtml += '<div class="notif-item" style="padding:10px 0; border-bottom:1px solid var(--surface-border); margin-bottom:8px;">';
-        listHtml += '<div class="notif-msg" style="font-weight:600; font-size:0.92rem; color:var(--text);">' + (isAdmin ? '📢 ' : '🧹 ') + escHtml(n.mensaje) + '</div>';
-        if (n.fechaLimpieza) listHtml += '<div style="font-size:0.8rem; color:var(--primary); margin-top:2px;">Fecha asociada: ' + escHtml(n.fechaLimpieza) + '</div>';
+        listHtml += '<div class="notif-msg" style="font-weight:600; font-size:0.92rem; color:var(--text);">' + (isAdmin ? '📢 ' : '🧹 ') + escHtml(fmtTextoFechas(n.mensaje)) + '</div>';
+        if (n.fechaLimpieza) listHtml += '<div style="font-size:0.8rem; color:var(--primary); margin-top:2px;">Fecha asociada: ' + escHtml(fmtFechaES(n.fechaLimpieza)) + '</div>';
         listHtml += '<div class="notif-time" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">' + escHtml(n.creado || '') + '</div>';
         listHtml += '</div>';
       });
@@ -1916,10 +1943,10 @@
 
         html += '<tr>';
         html += '<td><span class="badge badge-apt">' + apt + '</span></td>';
-        html += '<td><strong>' + fecha + '</strong></td>';
+        html += '<td><strong>' + fmtFechaES(fecha) + '</strong></td>';
         html += '<td>' + (horario !== '-' ? horario : '10:00') + '</td>';
         html += '<td>' + preparar + '</td>';
-        html += '<td>' + entrada + '</td>';
+        html += '<td>' + fmtTextoFechas(entrada) + '</td>';
 
         if (dLib > 0) {
           html += '<td><span class="badge" style="background:rgba(239,68,68,0.2); color:#f87171; border:1px solid #ef4444; font-weight:700;">' + dLib + ' días</span></td>';
@@ -2471,7 +2498,7 @@
         html += '<td style="color:' + ((c.gastosPendientes || 0) > 0 ? '#e67e22' : 'var(--text-muted)') + '">€ ' + (c.gastosPendientes || 0).toFixed(2) + '</td>';
         html += '<td><strong style="font-size:0.95rem; color:var(--text);">€ ' + (c.total || 0).toFixed(2) + '</strong></td>';
         html += '<td>' + (isPag ? '<span class="badge badge-success">Pagado</span>' : '<span class="badge badge-warning">Pendiente</span>') + '</td>';
-        html += '<td>' + (c.fechaPago || '-') + '</td>';
+        html += '<td>' + fmtFechaES(c.fechaPago || '-') + '</td>';
         html += '<td style="color:var(--text-muted); font-size:0.8rem;">' + (c.notas || '-') + '</td>';
         html += '<td style="text-align:right;">';
         html += '<button class="btn btn-sm" onclick="openModalStatoCont(\'' + c.id + '\')">✏️ Estado</button>';
@@ -2604,7 +2631,7 @@
         if (g.estado === 'rechazado') badge = '<span class="badge badge-danger">🔴 Rechazado</span>';
 
         html += '<tr>';
-        html += '<td>' + (g.fecha || '-') + '</td>';
+        html += '<td>' + fmtFechaES(g.fecha || '-') + '</td>';
         html += '<td><span class="badge badge-enc">' + (g.encargado || '-') + '</span></td>';
         html += '<td><span class="badge badge-apt">' + (g.apartamento || '-') + '</span></td>';
         html += '<td>' + (g.mes || '-') + '/' + (g.anno || '-') + '</td>';
@@ -2697,7 +2724,7 @@
           '<td>€ ' + (c.gastos || 0).toFixed(2) + '</td>' +
           '<td><strong>€ ' + t.toFixed(2) + '</strong></td>' +
           '<td>' + (c.estado === 'pagado' ? 'Pagado' : 'Pendiente') + '</td>' +
-          '<td>' + (c.fechaPago || '-') + '</td>' +
+          '<td>' + fmtFechaES(c.fechaPago || '-') + '</td>' +
           '</tr>';
       });
 
@@ -2983,10 +3010,10 @@
 
         bHtml += '<tr>';
         bHtml += '<td><span class="badge badge-apt">' + apt + '</span></td>';
-        bHtml += '<td><strong>' + fecha + '</strong></td>';
+        bHtml += '<td><strong>' + fmtFechaES(fecha) + '</strong></td>';
         if (p.verHorario !== false) bHtml += '<td>' + (horario !== '-' ? horario : '10:00') + '</td>';
         if (p.verPrepararPara !== false) bHtml += '<td>' + preparar + '</td>';
-        if (p.verEntradaProximos !== false) bHtml += '<td>' + entrada + '</td>';
+        if (p.verEntradaProximos !== false) bHtml += '<td>' + fmtTextoFechas(entrada) + '</td>';
 
         if (p.verDiasLibres !== false) {
           if (dLib > 0) {
@@ -3026,7 +3053,13 @@
         const res = await apiCall("saveNotaEncargado", { id: id, nota: nota, mes: mes, anno: anno });
         if (res && res.success) {
           closeModal('modal-nota-enc');
-          toast("Nota guardada correctamente", "success");
+          if (res.notificado === false) {
+            toast("Nota guardada, pero NO se pudo avisar al administrador (error al registrar la notificación)", "error");
+          } else if (res.notificado === undefined) {
+            toast("Nota guardada. El backend está desactualizado: el administrador no recibirá aviso", "error");
+          } else {
+            toast("Nota guardada correctamente", "success");
+          }
           loadCollabCalendario();
         } else {
           toast(res.error || "Error al guardar nota", "error");
@@ -3141,7 +3174,7 @@
           const canDelete = (g.estado === 'pendiente');
 
           html += '<tr>';
-          html += '<td>' + (g.fecha || '-') + '</td>';
+          html += '<td>' + fmtFechaES(g.fecha || '-') + '</td>';
           html += '<td><span class="badge badge-apt">' + (g.apartamento || '-') + '</span></td>';
           html += '<td><strong>' + (g.concepto || '-') + '</strong></td>';
           html += '<td><strong>€ ' + (parseFloat(g.importe) || 0).toFixed(2) + '</strong></td>';
@@ -3215,6 +3248,12 @@
           closeModal('modal-add-gasto');
           toast("Gasto registrado correctamente", "success");
           if (SESSION.role === 'admin') {
+            const fm = /^(\d{4})-(\d{2})-/.exec(fecha || '');
+            if (fm) {
+              const sm = document.getElementById('admin-cont-filter-mes'), sa = document.getElementById('admin-cont-filter-anno');
+              if (sm) sm.value = String(parseInt(fm[2], 10));
+              if (sa) sa.value = fm[1];
+            }
             loadAdminContabilita();
           } else {
             loadCollabCompensi();
