@@ -323,6 +323,7 @@
       padding: 20px;
     }
     .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease-out; }
+    #modal-notificaciones { z-index: 400; }
     .modal {
       background: var(--surface);
       border: 1px solid var(--surface-border);
@@ -847,6 +848,24 @@
 
       <!-- Tab Collab: Compensi e Gastos -->
       <div id="collab-tab-compensi" class="collab-subview" style="display:none;">
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">Mes:</span>
+            <select id="collab-comp-filter-mes" onchange="loadCollabCompensi()">
+              <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+              <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+              <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+              <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+            </select>
+            <select id="collab-comp-filter-anno" onchange="loadCollabCompensi()">
+              <option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option>
+            </select>
+          </div>
+          <div style="margin-left:auto;">
+            <button type="button" class="btn btn-sm" onclick="resetCollabCompFiltro()">📅 Mes actual</button>
+          </div>
+        </div>
+
         <div class="stats-grid">
           <div class="stat-card">
             <span class="stat-label">Limpiezas del Mes</span>
@@ -873,7 +892,7 @@
         <!-- Sección de Gastos -->
         <div class="card" id="collab-gastos-section">
           <div class="card-title">
-            <span>📦 Mis Gastos de este Mes</span>
+            <span>📦 Mis Gastos del Mes Seleccionado</span>
             <button class="btn btn-sm btn-primary" id="btn-collab-add-gasto" onclick="openModalAddGastoCollab()">➕ Añadir Gasto</button>
           </div>
           <p id="collab-mes-cerrado-msg" style="display:none; color:var(--warning); font-size:0.86rem; margin-bottom:14px; background:rgba(245,158,11,0.1); padding:10px; border-radius:8px;">
@@ -919,6 +938,23 @@
               <input type="email" id="collab-new-email" required placeholder="nuevo@correo.com">
             </div>
             <button type="submit" class="btn btn-primary" style="width:100%;">Actualizar Mi Correo</button>
+          </form>
+
+          <hr style="border:none; border-top:1px solid var(--surface-border); margin:24px 0 20px;">
+          <h4 style="font-size:0.95rem; margin-bottom:6px;">Cambiar Contraseña</h4>
+          <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom:14px;">
+            Introduce tu contraseña actual y la nueva. El administrador recibirá un aviso del cambio.
+          </p>
+          <form onsubmit="handleCollabPasswordUpdate(event)">
+            <div class="form-group" style="margin-bottom:14px;">
+              <label>Contraseña actual</label>
+              <input type="password" id="collab-old-pwd" required autocomplete="current-password">
+            </div>
+            <div class="form-group" style="margin-bottom:20px;">
+              <label>Nueva contraseña</label>
+              <input type="password" id="collab-new-pwd" required minlength="4" autocomplete="new-password">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Cambiar Mi Contraseña</button>
           </form>
         </div>
       </div>
@@ -1404,11 +1440,11 @@
       const currentMonth = now.getMonth() + 1;
       const currentYear = now.getFullYear();
 
-      ['admin-filter-mes', 'admin-cont-filter-mes', 'collab-filter-mes'].forEach(id => {
+      ['admin-filter-mes', 'admin-cont-filter-mes', 'collab-filter-mes', 'collab-comp-filter-mes'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = currentMonth;
       });
-      ['admin-filter-anno', 'admin-cont-filter-anno', 'collab-filter-anno'].forEach(id => {
+      ['admin-filter-anno', 'admin-cont-filter-anno', 'collab-filter-anno', 'collab-comp-filter-anno'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = currentYear;
       });
@@ -1602,11 +1638,11 @@
       const now = new Date();
       const curMes = String(now.getMonth() + 1);
       const curAnno = String(now.getFullYear());
-      ['admin-filter-mes', 'admin-cont-filter-mes', 'collab-filter-mes'].forEach(id => {
+      ['admin-filter-mes', 'admin-cont-filter-mes', 'collab-filter-mes', 'collab-comp-filter-mes'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = curMes;
       });
-      ['admin-filter-anno', 'admin-cont-filter-anno', 'collab-filter-anno'].forEach(id => {
+      ['admin-filter-anno', 'admin-cont-filter-anno', 'collab-filter-anno', 'collab-comp-filter-anno'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = curAnno;
       });
@@ -1645,7 +1681,7 @@
     async function checkBackendVersion() {
       try {
         const res = await apiCall("ping");
-        if (res && !res.backendVersion && !document.getElementById('backend-old-banner')) {
+        if (res && !/^5\.[4-9]/.test(String(res.backendVersion || '')) && !document.getElementById('backend-old-banner')) {
           const b = document.createElement('div');
           b.id = 'backend-old-banner';
           b.style.cssText = 'background:#b45309;color:#fff;padding:10px 16px;font-size:0.85rem;text-align:center;';
@@ -1708,10 +1744,6 @@
       const items = list.filter(n => n && !PENDING_READ.has(String(n.id)));
       if (items.length === 0) return;
 
-      // Si el usuario esta editando algo en otro modal, se muestran en el siguiente ciclo
-      const other = document.querySelector('.modal-overlay.active:not(#modal-notificaciones)');
-      if (other) return;
-
       const isAdmin = SESSION.role === 'admin';
       const known = new Set(UNREAD_NOTIF_IDS);
       const hasNew = items.some(n => !known.has(String(n.id)));
@@ -1722,8 +1754,8 @@
       const sub = document.getElementById('notif-modal-sub');
       if (title) title.innerText = isAdmin ? "🔔 Notificaciones del Administrador" : "🔔 Nuevos Cambios en tu Calendario";
       if (sub) sub.innerText = isAdmin
-        ? "Actividad reciente de los colaboradores (nuevos gastos, notas):"
-        : "El administrador ha realizado cambios o notas en tus limpiezas o gastos:";
+        ? "Actividad reciente de los colaboradores (notas, gastos, correo, contraseña):"
+        : "El administrador ha realizado cambios en tus limpiezas, gastos o pagos:";
 
       let listHtml = '';
       items.forEach(n => {
@@ -3005,9 +3037,16 @@
     }
 
     // --- Colaborador Compensi e Gastos ---
+    function resetCollabCompFiltro() {
+      const now = new Date();
+      document.getElementById('collab-comp-filter-mes').value = String(now.getMonth() + 1);
+      document.getElementById('collab-comp-filter-anno').value = String(now.getFullYear());
+      loadCollabCompensi();
+    }
+
     async function loadCollabCompensi(isSilent = false) {
-      const mes = document.getElementById('collab-filter-mes').value;
-      const anno = document.getElementById('collab-filter-anno').value;
+      const mes = document.getElementById('collab-comp-filter-mes').value;
+      const anno = document.getElementById('collab-comp-filter-anno').value;
 
       try {
         const res = await apiCall("getContabilidad", { mes: mes, anno: anno });
@@ -3018,15 +3057,18 @@
         let gastosAprobados = 0;
         let gastosPendientes = 0;
         let isPagado = false;
+        let pagadosCount = 0;
+        let totalLimpAcc = 0;
 
         records.forEach(r => {
           pulCount += parseInt(r.nLimpiezas) || 0;
+          totalLimpAcc += (parseInt(r.nLimpiezas) || 0) * (parseFloat(r.precioPorLimpieza) || tarifa);
           gastosAprobados += parseFloat(r.gastos) || 0;
           gastosPendientes += parseFloat(r.gastosPendientes) || 0;
-          if (r.estado === 'pagado' || r.stato === 'pagado') isPagado = true;
+          if (r.estado === 'pagado' || r.stato === 'pagado') { isPagado = true; pagadosCount++; }
         });
 
-        const totalLimp = pulCount * tarifa;
+        const totalLimp = totalLimpAcc;
         const totalLiquidacion = totalLimp + gastosAprobados;
 
         document.getElementById('collab-stat-pulizie').innerText = pulCount;
@@ -3038,8 +3080,10 @@
         if (pendEl) pendEl.innerText = "€ " + gastosPendientes.toFixed(2);
 
         const estBadge = document.getElementById('collab-stat-estado');
-        if (isPagado) {
+        if (records.length && pagadosCount === records.length) {
           estBadge.innerHTML = '<span class="badge badge-success">🟢 Pagado</span>';
+        } else if (isPagado) {
+          estBadge.innerHTML = '<span class="badge badge-warning">🟠 Pago parcial</span>';
         } else {
           estBadge.innerHTML = '<span class="badge badge-warning">🟡 Pendiente</span>';
         }
@@ -3183,6 +3227,26 @@
       }
     }
 
+    async function handleCollabPasswordUpdate(e) {
+      e.preventDefault();
+      const oldPwd = document.getElementById('collab-old-pwd').value;
+      const newPwd = document.getElementById('collab-new-pwd').value;
+      try {
+        const res = await apiCall("actualizarPasswordColaborador", { viejaPassword: oldPwd, nuevaPassword: newPwd });
+        if (res && res.success) {
+          // Si la contraseña estaba recordada, se actualiza para que la renovación automática de sesión siga funcionando
+          if (localStorage.getItem("CP_SAVED_PWD")) localStorage.setItem("CP_SAVED_PWD", newPwd);
+          document.getElementById('collab-old-pwd').value = '';
+          document.getElementById('collab-new-pwd').value = '';
+          toast("Contraseña actualizada correctamente", "success");
+        } else {
+          toast((res && res.error) || "Error al cambiar la contraseña", "error");
+        }
+      } catch (err) {
+        toast("Error de red", "error");
+      }
+    }
+
     async function handleCollabEmailUpdate(e) {
       e.preventDefault();
       const newEmail = document.getElementById('collab-new-email').value.trim();
@@ -3191,6 +3255,7 @@
         if (res && res.success) {
           SESSION.email = res.email || newEmail;
           localStorage.setItem("CP_EMAIL", SESSION.email);
+          if (localStorage.getItem("CP_SAVED_EMAIL")) localStorage.setItem("CP_SAVED_EMAIL", SESSION.email);
           toast("¡Correo actualizado! Te hemos enviado tu contraseña por email.", "success");
         } else {
           toast(res.error || "Error al actualizar correo", "error");
