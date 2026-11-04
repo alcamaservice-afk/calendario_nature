@@ -1583,9 +1583,8 @@
       checkCollabNotificaciones();
     }
 
-    async 
     async function checkAdminNotificaciones() {
-      if (SESSION.role !== 'admin') return;
+      if (!SESSION || !SESSION.token || SESSION.role !== 'admin') return;
       try {
         const res = await apiCall("getNotificaciones");
         if (res && res.success && Array.isArray(res.notificaciones) && res.notificaciones.length > 0) {
@@ -1598,10 +1597,10 @@
 
           let html = '';
           res.notificaciones.forEach(n => {
-            html += '<div class="notif-item">';
-            html += '<div class="notif-msg">📢 ' + n.mensaje + '</div>';
-            if (n.fechaLimpieza) html += '<div style="font-size:0.75rem; color:var(--primary); margin-top:2px;">Fecha asociada: ' + n.fechaLimpieza + '</div>';
-            html += '<div class="notif-time">' + (n.creado || '') + '</div>';
+            html += '<div class="notif-item" style="padding:10px 0; border-bottom:1px solid var(--surface-border); margin-bottom:8px;">';
+            html += '<div class="notif-msg" style="font-weight:600; font-size:0.92rem; color:var(--text);">📢 ' + n.mensaje + '</div>';
+            if (n.fechaLimpieza) html += '<div style="font-size:0.8rem; color:var(--primary); margin-top:2px;">Fecha asociada: ' + n.fechaLimpieza + '</div>';
+            html += '<div class="notif-time" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">' + (n.creado || '') + '</div>';
             html += '</div>';
           });
           if (container) container.innerHTML = html;
@@ -1613,22 +1612,31 @@
     }
 
     async function checkCollabNotificaciones() {
+      if (!SESSION || !SESSION.token || SESSION.role === 'admin') return;
       try {
         const res = await apiCall("getNotificaciones");
-        if (res && res.success && res.notificaciones && res.notificaciones.length > 0) {
+        if (res && res.success && Array.isArray(res.notificaciones) && res.notificaciones.length > 0) {
           UNREAD_NOTIF_IDS = res.notificaciones.map(n => n.id);
           const container = document.getElementById('notif-list-container');
+          const title = document.getElementById('notif-modal-title');
+          const sub = document.getElementById('notif-modal-sub');
+          if (title) title.innerText = "🔔 Nuevos Cambios en tu Calendario";
+          if (sub) sub.innerText = "El administrador ha realizado cambios o notas en tus limpiezas:";
+
           let html = '';
           res.notificaciones.forEach(n => {
-            html += '<div class="notif-item">';
-            html += '<div class="notif-msg">🧹 ' + n.mensaje + '</div>';
-            html += '<div class="notif-time">' + n.creado + '</div>';
+            html += '<div class="notif-item" style="padding:10px 0; border-bottom:1px solid var(--surface-border); margin-bottom:8px;">';
+            html += '<div class="notif-msg" style="font-weight:600; font-size:0.92rem; color:var(--text);">🧹 ' + n.mensaje + '</div>';
+            if (n.fechaLimpieza) html += '<div style="font-size:0.8rem; color:var(--primary); margin-top:2px;">Fecha: ' + n.fechaLimpieza + '</div>';
+            html += '<div class="notif-time" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">' + (n.creado || '') + '</div>';
             html += '</div>';
           });
-          container.innerHTML = html;
+          if (container) container.innerHTML = html;
           openModal('modal-notificaciones');
         }
-      } catch(e) {}
+      } catch(e) {
+        console.warn("Error comprobando notificaciones collab:", e);
+      }
     }
 
     async function closeModalNotificaciones() {
@@ -1961,6 +1969,7 @@
     let CURRENT_USERS_LIST = [];
     async function loadAdminUtenti() {
       const tbody = document.getElementById('tbody-admin-utenti');
+      if (!tbody) return;
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando colaboradores...</td></tr>';
       try {
         const res = await apiCall("getUsuarios");
@@ -1969,10 +1978,11 @@
           CURRENT_USERS_LIST = raw.filter(u => u.activo !== false && u.activo !== "FALSE" && u.activo !== "");
           renderAdminUtentiTable(CURRENT_USERS_LIST);
         } else {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">' + (res.error || "Error") + '</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">' + ((res && res.error) ? res.error : "Error al obtener colaboradores") + '</td></tr>';
         }
       } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">Error de red</td></tr>';
+        console.error("loadAdminUtenti error:", e);
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--danger);">Error de conexión (' + (e.message || "Verifica red") + ')</td></tr>';
       }
     }
 
@@ -3021,21 +3031,23 @@
     async function backgroundAutoRefresh() {
       if (document.hidden) return;
       if (document.querySelector('.modal-overlay.active')) return;
-      if (!SESSION.token) return;
+      if (!SESSION || !SESSION.token) return;
 
       if (SESSION.role === 'admin') {
         const calEl = document.getElementById('admin-tab-calendario');
+        const colEl = document.getElementById('admin-tab-collaboratori');
         const contEl = document.getElementById('admin-tab-contabilita');
-        if (calEl && calEl.style.display !== 'none') loadAdminCalendario(true);
-        else if (contEl && contEl.style.display !== 'none') loadAdminContabilita(true);
+        if (calEl && (calEl.style.display === 'block' || calEl.style.display === '')) loadAdminCalendario(true);
+        else if (colEl && colEl.style.display === 'block') loadAdminUtenti();
+        else if (contEl && contEl.style.display === 'block') loadAdminContabilita(true);
         checkAdminNotificaciones();
       } else {
         const calEl = document.getElementById('collab-tab-calendario');
         const compEl = document.getElementById('collab-tab-compensi');
-        if (calEl && calEl.style.display !== 'none') {
+        if (calEl && (calEl.style.display === 'block' || calEl.style.display === '')) {
           loadCollabCalendario(true);
           checkCollabNotificaciones();
-        } else if (compEl && compEl.style.display !== 'none') {
+        } else if (compEl && compEl.style.display === 'block') {
           loadCollabCompensi(true);
           checkCollabNotificaciones();
         }
