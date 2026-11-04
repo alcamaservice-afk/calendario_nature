@@ -2933,7 +2933,9 @@
 
     function openModalNotaEnc(id, currentNota) {
       document.getElementById('nota-enc-id').value = id;
-      document.getElementById('nota-enc-text').value = currentNota || "";
+      let txt = currentNota || "";
+      try { txt = decodeURIComponent(txt); } catch (e) {}
+      document.getElementById('nota-enc-text').value = txt;
       openModal('modal-nota-enc');
     }
 
@@ -3157,6 +3159,10 @@
     // --- Auto-refresco en segundo plano cada 10 segundos con sincronización limpia ---
     let LAST_VERSION = null;
     let REFRESH_BUSY = false;
+    let REFRESH_STARTED = 0;
+    function withTimeout(promise, ms) {
+      return Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+    }
     let PENDING_REFRESH = false;
     let LEGACY_POLLING = false;
 
@@ -3173,12 +3179,15 @@
 
     // Cada pocos segundos pregunta al servidor si hay cambios (version) y notificaciones nuevas.
     async function backgroundAutoRefresh() {
-      if (!SESSION || !SESSION.token || REFRESH_BUSY || SESSION_RECOVERING) return;
+      if (!SESSION || !SESSION.token || SESSION_RECOVERING) return;
+      // Si una consulta se queda colgada (red lenta), tras 45 s se ignora para que el refresco no se bloquee
+      if (REFRESH_BUSY && Date.now() - REFRESH_STARTED < 45000) return;
       REFRESH_BUSY = true;
+      REFRESH_STARTED = Date.now();
       try {
         let res = null;
         if (!LEGACY_POLLING) {
-          res = await apiCall("getUpdates");
+          res = await withTimeout(apiCall("getUpdates"), 30000);
           if (res && res.success === false && /no reconocida/i.test(res.error || "")) {
             LEGACY_POLLING = true;   // backend antiguo: se usa el modo clasico
             res = null;
@@ -3211,7 +3220,7 @@
         REFRESH_BUSY = false;
       }
     }
-    setInterval(backgroundAutoRefresh, 8000);
+    setInterval(backgroundAutoRefresh, 6000);
 
     // Refresco instantáneo al volver a la pestaña
     document.addEventListener('visibilitychange', () => {
