@@ -1250,6 +1250,10 @@
           <label>Fecha del Gasto</label>
           <input type="date" id="edit-gasto-fecha" required>
         </div>
+        <div class="form-group">
+          <label>Estado del Gasto</label>
+          <select id="edit-gasto-estado"></select>
+        </div>
         <p id="edit-gasto-estado-info" style="font-size:0.82rem; color:var(--text-muted); margin-bottom:20px;"></p>
         <div style="display:flex; justify-content:flex-end; gap:10px;">
           <button type="button" class="btn" onclick="closeModal('modal-edit-gasto')">Cancelar</button>
@@ -2898,9 +2902,10 @@
       const anno = document.getElementById('admin-cont-filter-anno').value;
       const enc = document.getElementById('admin-cont-filter-enc').value;
       const apt = document.getElementById('admin-cont-filter-apt').value;
+      const est = document.getElementById('admin-cont-filter-est').value;
 
       try {
-        const res = await apiCall("getGastos", { mes: mes, anno: anno, encargado: enc, apartamento: apt });
+        const res = await apiCall("getGastos", { mes: mes, anno: anno, encargado: enc, apartamento: apt, estado: est });
         const gastos = (res && res.success) ? (res.gastos || res.data || []) : [];
         renderAdminGastos(gastos);
       } catch (e) {}
@@ -2999,8 +3004,17 @@
       document.getElementById('edit-gasto-fecha').value = /^\d{4}-\d{2}-\d{2}/.test(g.fecha || '') ? String(g.fecha).slice(0, 10) : new Date().toISOString().split('T')[0];
 
       const etiquetas = { pendiente: 'Pendiente', aprobado: 'Aprobado', rechazado: 'Rechazado', pagado: 'Pagado' };
-      let info = 'Estado actual: ' + (etiquetas[g.estado] || g.estado) + '. El estado no cambia al editar.';
-      if (g.estado === 'pagado') info += ' Si cambias el importe, revisa también la liquidación del periodo.';
+      const estActual = (g.estado === 'pagato') ? 'pagado' : (g.estado || 'pendiente');
+      const selEst = document.getElementById('edit-gasto-estado');
+      let opts = '<option value="pendiente">Pendiente</option><option value="pagado">Pagado</option>';
+      if (estActual === 'aprobado' || estActual === 'rechazado') {
+        opts += '<option value="' + estActual + '">' + etiquetas[estActual] + '</option>';
+      }
+      selEst.innerHTML = opts;
+      selEst.value = estActual;
+      selEst.setAttribute('data-orig', estActual);
+      let info = 'Cambiar el estado del gasto no modifica el estado de la liquidación del periodo. Un gasto pendiente no cuenta en los totales hasta que se aprueba o se paga.';
+      if (estActual === 'pagado') info += ' Si cambias el importe, revisa también la liquidación del periodo.';
       document.getElementById('edit-gasto-estado-info').innerText = info;
 
       openModal('modal-edit-gasto');
@@ -3026,9 +3040,20 @@
             fecha: fecha
           }
         });
+        let estadoOk = true, estadoErr = '';
+        const selEst = document.getElementById('edit-gasto-estado');
+        const estNuevo = selEst ? selEst.value : '';
+        const estOrig = selEst ? (selEst.getAttribute('data-orig') || '') : '';
+        if (res && res.success && estNuevo && estNuevo !== estOrig) {
+          try {
+            const rEst = await apiCall("updateEstadoGasto", { gastoId: id, nuevoEstado: estNuevo });
+            if (!rEst || !rEst.success) { estadoOk = false; estadoErr = (rEst && rEst.error) || 'Error'; }
+          } catch (e2) { estadoOk = false; estadoErr = 'Error de red'; }
+        }
         if (res && res.success) {
           closeModal('modal-edit-gasto');
-          toast("Gasto actualizado correctamente", "success");
+          if (estadoOk) toast("Gasto actualizado correctamente", "success");
+          else toast("Gasto guardado, pero no se pudo cambiar el estado: " + estadoErr, "error");
           // Si la fecha cambia de mes, se muestra el nuevo mes para no perder de vista el gasto
           const fm = /^(\d{4})-(\d{2})-/.exec(fecha || '');
           const sm = document.getElementById('admin-cont-filter-mes'), sa = document.getElementById('admin-cont-filter-anno');
