@@ -442,6 +442,146 @@
       .tab-btn { padding: 8px 12px; font-size: 0.8rem; }
       .perm-grid { grid-template-columns: 1fr; }
     }
+    /* ===================================================================
+       v5.6 · Tablas sin scroll horizontal + vista móvil más cómoda
+       =================================================================== */
+    main, .card { min-width: 0; }
+    .td-val { display: contents; }
+    .table-container { max-width: 100%; }
+    .table-container th { white-space: normal; padding: 10px 8px; font-size: 0.78rem; line-height: 1.25; }
+    .table-container td { padding: 10px 8px; overflow-wrap: break-word; }
+    .tab-ico, .tab-lbl { display: inline; }
+    .tab-btn { gap: 8px; }
+
+    /* Tablets y móviles: cada fila de la tabla pasa a ser una tarjeta (sin scroll lateral) */
+    @media screen and (max-width: 1100px) {
+      .table-container { overflow: visible; border: none; border-radius: 0; background: transparent; }
+      .table-container table,
+      .table-container tbody,
+      .table-container tr,
+      .table-container td { display: block; width: 100%; }
+      .table-container thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+      .table-container tbody tr {
+        background: var(--bg);
+        border: 1px solid var(--surface-border);
+        border-radius: 12px;
+        margin-bottom: 12px;
+        overflow: hidden;
+      }
+      .table-container tbody tr:hover td { background: transparent; }
+      .table-container td {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+        white-space: normal !important;
+      }
+      .table-container tbody tr:last-child td { border-bottom: 1px solid rgba(51, 65, 85, 0.5); }
+      .table-container tbody tr td:last-child,
+      .table-container tbody tr:last-child td:last-child { border-bottom: none; }
+      .table-container td::before {
+        content: attr(data-label);
+        flex: 0 0 36%;
+        max-width: 36%;
+        padding-top: 2px;
+        font-size: 0.74rem;
+        font-weight: 600;
+        color: var(--text-muted);
+      }
+      .table-container td[data-label=""]::before { display: none; }
+      .table-container td .td-val { display: block; flex: 1; min-width: 0; text-align: right; }
+      .table-container tbody tr td:first-child { background: #162032; font-weight: 600; }
+      .table-container td.td-full { display: block; text-align: center; }
+      .table-container td.td-full .td-val { text-align: center; }
+      .table-container td.td-actions .td-val { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+      .table-container td.td-actions .btn { flex: 1 1 calc(50% - 8px); min-height: 44px; }
+    }
+
+    /* Móvil */
+    @media screen and (max-width: 768px) {
+      main { padding: 12px 12px calc(88px + env(safe-area-inset-bottom, 0px)); }
+      /* Sin transform residual para que la barra inferior fija se ancle a la pantalla */
+      .view-section { animation: none; }
+
+      /* Navegación por pestañas abajo, al alcance del pulgar */
+      .tabs-nav {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
+        margin: 0; gap: 2px; overflow: visible;
+        padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+        border-width: 1px 0 0 0; border-radius: 16px 16px 0 0;
+        background: rgba(30, 41, 59, 0.97);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+      }
+      .tab-btn {
+        flex: 1 1 0; min-width: 0; min-height: 54px;
+        flex-direction: column; justify-content: center; gap: 3px;
+        padding: 6px 1px; font-size: 0.62rem; line-height: 1.1;
+        text-align: center; white-space: normal; border-radius: 10px;
+      }
+      .tab-ico { font-size: 1.3rem; line-height: 1; }
+      .tab-lbl { overflow-wrap: normal; word-break: normal; }
+
+      #toast-container { left: 12px; right: 12px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+      .toast { width: 100%; }
+
+      /* Cabecera compacta */
+      header { padding: 8px 12px; }
+      .brand { gap: 8px; }
+      .brand-title { font-size: 0.95rem; line-height: 1.15; max-width: 130px; }
+      .header-actions { gap: 8px; }
+      .user-pill { padding: 4px 10px; }
+      #header-user-name { max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      #header-user-role { display: none; }
+      header .btn { min-height: 36px; padding: 6px 10px; font-size: 0.78rem; white-space: nowrap; }
+
+      /* Controles táctiles (16px evita el zoom automático de iOS) */
+      select, input[type="text"], input[type="email"], input[type="password"],
+      input[type="date"], input[type="number"], textarea { font-size: 16px; min-height: 46px; }
+      textarea { min-height: 90px; }
+      .btn { min-height: 46px; padding: 10px 16px; font-size: 0.95rem; }
+      .btn-sm { min-height: 42px; padding: 8px 14px; font-size: 0.86rem; }
+
+      /* Filtros apilados y a todo el ancho */
+      .filter-bar { display: grid; grid-template-columns: 1fr 1fr; align-items: end; gap: 10px; padding: 12px; }
+      .filter-group { flex-wrap: wrap; gap: 4px; min-width: 0; }
+      .filter-group:has(select + select) { grid-column: 1 / -1; }
+      .filter-group select { flex: 1 1 0; min-width: 0; width: 100%; }
+      .filter-label { flex: 1 1 100%; font-size: 0.74rem; }
+      .filter-bar > div[style*="margin-left:auto"] { grid-column: 1 / -1; margin-left: 0 !important; width: 100%; flex-wrap: wrap; }
+      .filter-bar > div[style*="margin-left:auto"] .btn,
+      .filter-bar > div[style*="margin-left:auto"] .badge { flex: 1 1 100%; justify-content: center; }
+
+      #admin-tab-collaboratori > div:first-child > div { flex-wrap: wrap; width: 100%; }
+      #admin-tab-collaboratori > div:first-child .btn { flex: 1 1 100%; margin-right: 0 !important; }
+
+      .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .stats-grid .stat-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+      .stat-card { padding: 12px; }
+      .stat-value { font-size: 1.25rem; }
+      .card { padding: 14px; margin-bottom: 14px; }
+      .card-title { font-size: 1rem; flex-wrap: wrap; gap: 10px; }
+      .card-title .btn { flex: 1 1 100%; }
+
+      /* Ventanas modales como hoja inferior */
+      .modal-overlay { align-items: flex-end; padding: 0; }
+      .modal {
+        max-width: 100%; max-height: 92vh; max-height: 92dvh;
+        border-radius: 18px 18px 0 0;
+        padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+      }
+      .modal-overlay.active .modal { animation: sheetUp 0.22s ease-out; }
+      .modal-close { width: 44px; height: 44px; font-size: 1.5rem; }
+      .modal form div[style*="justify-content:flex-end"] { gap: 10px; }
+      .modal form div[style*="justify-content:flex-end"] .btn { flex: 1; }
+    }
+    @keyframes sheetUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @media screen and (max-width: 480px) {
+      [style*="minmax(320px"] { grid-template-columns: 1fr !important; }
+    }
   </style>
 </head>
 <body>
@@ -519,11 +659,11 @@
     <!-- ==================== VIEW: ADMIN ==================== -->
     <div id="view-admin" class="view-section">
       <div class="tabs-nav">
-        <button class="tab-btn active" onclick="switchAdminTab('calendario', this)">📅 Calendario</button>
-        <button class="tab-btn" onclick="switchAdminTab('collaboratori', this)">👥 Colaboradores</button>
-        <button class="tab-btn" onclick="switchAdminTab('contabilita', this)">💰 Contabilidad</button>
-        <button class="tab-btn" onclick="switchAdminTab('configurazione', this)">🏢 Configuración</button>
-        <button class="tab-btn" onclick="switchAdminTab('profilo', this)">👤 Mi Perfil</button>
+        <button class="tab-btn active" onclick="switchAdminTab('calendario', this)"><span class="tab-ico">📅</span><span class="tab-lbl">Calendario</span></button>
+        <button class="tab-btn" onclick="switchAdminTab('collaboratori', this)"><span class="tab-ico">👥</span><span class="tab-lbl">Colaboradores</span></button>
+        <button class="tab-btn" onclick="switchAdminTab('contabilita', this)"><span class="tab-ico">💰</span><span class="tab-lbl">Contabilidad</span></button>
+        <button class="tab-btn" onclick="switchAdminTab('configurazione', this)"><span class="tab-ico">🏢</span><span class="tab-lbl">Configuración</span></button>
+        <button class="tab-btn" onclick="switchAdminTab('profilo', this)"><span class="tab-ico">👤</span><span class="tab-lbl">Mi Perfil</span></button>
       </div>
 
       <!-- Tab Admin: Calendario -->
@@ -743,7 +883,7 @@
                 </tr>
               </thead>
               <tbody id="tbody-admin-gastos">
-                <tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando gastos...</td></tr>
+                <tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Cargando gastos...</td></tr>
               </tbody>
             </table>
           </div>
@@ -815,9 +955,9 @@
     <!-- ==================== VIEW: COLLABORATORE ==================== -->
     <div id="view-collaborator" class="view-section">
       <div class="tabs-nav">
-        <button class="tab-btn active" onclick="switchCollabTab('calendario', this)">📅 Mi Calendario</button>
-        <button class="tab-btn" id="collab-tab-btn-compensi" onclick="switchCollabTab('compensi', this)">💰 Mis Pagos y Gastos</button>
-        <button class="tab-btn" onclick="switchCollabTab('profilo', this)">👤 Mi Perfil</button>
+        <button class="tab-btn active" onclick="switchCollabTab('calendario', this)"><span class="tab-ico">📅</span><span class="tab-lbl">Mi Calendario</span></button>
+        <button class="tab-btn" id="collab-tab-btn-compensi" onclick="switchCollabTab('compensi', this)"><span class="tab-ico">💰</span><span class="tab-lbl">Mis Pagos y Gastos</span></button>
+        <button class="tab-btn" onclick="switchCollabTab('profilo', this)"><span class="tab-ico">👤</span><span class="tab-lbl">Mi Perfil</span></button>
       </div>
 
       <!-- Tab Collab: Calendario Personale -->
@@ -1076,6 +1216,44 @@
         <div style="display:flex; justify-content:flex-end; gap:10px;">
           <button type="button" class="btn" onclick="closeModal('modal-add-gasto')">Cancelar</button>
           <button type="submit" class="btn btn-primary">Guardar Gasto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Editar Gasto (Admin) -->
+  <div class="modal-overlay" id="modal-edit-gasto">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">✏️ Editar Gasto</div>
+        <button class="modal-close" onclick="closeModal('modal-edit-gasto')">✕</button>
+      </div>
+      <form onsubmit="handleEditGastoSubmit(event)">
+        <input type="hidden" id="edit-gasto-id">
+        <div class="form-group">
+          <label>Colaborador</label>
+          <select id="edit-gasto-encargado" required></select>
+        </div>
+        <div class="form-group">
+          <label>Apartamento</label>
+          <select id="edit-gasto-apartamento" required></select>
+        </div>
+        <div class="form-group">
+          <label>Concepto / Descripción del Gasto</label>
+          <input type="text" id="edit-gasto-concepto" required>
+        </div>
+        <div class="form-group">
+          <label>Importe (€)</label>
+          <input type="number" step="0.01" min="0" id="edit-gasto-importe" required>
+        </div>
+        <div class="form-group">
+          <label>Fecha del Gasto</label>
+          <input type="date" id="edit-gasto-fecha" required>
+        </div>
+        <p id="edit-gasto-estado-info" style="font-size:0.82rem; color:var(--text-muted); margin-bottom:20px;"></p>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn" onclick="closeModal('modal-edit-gasto')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
         </div>
       </form>
     </div>
@@ -2729,6 +2907,7 @@
     }
 
     function renderAdminGastos(gastos) {
+      CURRENT_GASTOS_ROWS = gastos || [];
       const tbody = document.getElementById('tbody-admin-gastos');
       if (!gastos || gastos.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">No hay gastos registrados para este filtro</td></tr>';
@@ -2740,6 +2919,7 @@
         let badge = '<span class="badge badge-warning">🟡 Pendiente</span>';
         if (g.estado === 'aprobado') badge = '<span class="badge badge-success">🟢 Aprobado</span>';
         if (g.estado === 'rechazado') badge = '<span class="badge badge-danger">🔴 Rechazado</span>';
+        if (g.estado === 'pagado') badge = '<span class="badge badge-success">💶 Pagado</span>';
 
         html += '<tr>';
         html += '<td>' + fmtFechaES(g.fecha || '-') + '</td>';
@@ -2750,10 +2930,11 @@
         html += '<td style="font-weight:700;">€ ' + (parseFloat(g.importe) || 0).toFixed(2) + '</td>';
         html += '<td>' + badge + '</td>';
         html += '<td style="text-align:right; white-space:nowrap;">';
-        if (g.estado !== 'aprobado') {
+        html += '<button class="btn btn-sm btn-outline" onclick="openModalEditGasto(\'' + g.id + '\')">✏️ Editar</button> ';
+        if (g.estado === 'pendiente' || g.estado === 'rechazado') {
           html += '<button class="btn btn-sm btn-primary" onclick="cambiarEstadoGasto(\'' + g.id + '\', \'aprobado\')">Aprobar</button> ';
         }
-        if (g.estado !== 'rechazado') {
+        if (g.estado === 'pendiente' || g.estado === 'aprobado') {
           html += '<button class="btn btn-sm btn-outline" onclick="cambiarEstadoGasto(\'' + g.id + '\', \'rechazado\')">Rechazar</button> ';
         }
         html += '<button class="btn btn-sm btn-danger" onclick="eliminarGasto(\'' + g.id + '\')">🗑️</button>';
@@ -2772,6 +2953,98 @@
       document.getElementById('gasto-importe').value = "";
       document.getElementById('gasto-fecha').value = new Date().toISOString().split('T')[0];
       openModal('modal-add-gasto');
+    }
+
+    // --- Editar gasto (Admin): también gastos ya aprobados o pagados ---
+    function _quitaAcentos(t) {
+      let x = String(t === null || t === undefined ? '' : t).toUpperCase().trim();
+      try { x = x.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); } catch (e) {}
+      return x;
+    }
+
+    function openModalEditGasto(id) {
+      const g = (CURRENT_GASTOS_ROWS || []).find(x => String(x.id) === String(id));
+      if (!g) {
+        toast("No se encontró el gasto. Actualiza la lista e inténtalo de nuevo.", "error");
+        return;
+      }
+
+      // Apartamentos (los configurados + el actual del gasto si ya no existe en la lista)
+      let aptList = (APP_CONFIG && APP_CONFIG.apartamentos && APP_CONFIG.apartamentos.length > 0)
+        ? APP_CONFIG.apartamentos.slice() : ["Juan Llorens", "Palleter"];
+      aptList = aptList.filter(a => !/^N\d+$/i.test(a) && String(a).toLowerCase() !== 'varios');
+      const gApt = (g.apartamento || '').trim();
+      if (gApt && !aptList.some(a => String(a).toLowerCase() === gApt.toLowerCase())) aptList.push(gApt);
+      const selApt = document.getElementById('edit-gasto-apartamento');
+      selApt.innerHTML = aptList.map(a => '<option value="' + escHtml(a) + '">' + escHtml(a) + '</option>').join('');
+      const aptMatch = aptList.find(a => String(a).toLowerCase() === gApt.toLowerCase());
+      if (aptMatch) selApt.value = aptMatch;
+
+      // Colaboradores
+      const encNames = [];
+      (APP_CONFIG.encargados || []).forEach(e => {
+        const name = (typeof e === 'object') ? (e.nombre || '') : e;
+        if (name) encNames.push(name);
+      });
+      const gEnc = (g.encargado || '').trim();
+      let encMatch = encNames.find(n => _quitaAcentos(n) === _quitaAcentos(gEnc));
+      if (!encMatch && gEnc) { encNames.push(gEnc); encMatch = gEnc; }
+      const selEnc = document.getElementById('edit-gasto-encargado');
+      selEnc.innerHTML = encNames.map(n => '<option value="' + escHtml(n) + '">' + escHtml(n) + '</option>').join('');
+      if (encMatch) selEnc.value = encMatch;
+
+      document.getElementById('edit-gasto-id').value = g.id;
+      document.getElementById('edit-gasto-concepto').value = g.concepto || '';
+      document.getElementById('edit-gasto-importe').value = (parseFloat(g.importe) || 0).toFixed(2);
+      document.getElementById('edit-gasto-fecha').value = /^\d{4}-\d{2}-\d{2}/.test(g.fecha || '') ? String(g.fecha).slice(0, 10) : new Date().toISOString().split('T')[0];
+
+      const etiquetas = { pendiente: 'Pendiente', aprobado: 'Aprobado', rechazado: 'Rechazado', pagado: 'Pagado' };
+      let info = 'Estado actual: ' + (etiquetas[g.estado] || g.estado) + '. El estado no cambia al editar.';
+      if (g.estado === 'pagado') info += ' Si cambias el importe, revisa también la liquidación del periodo.';
+      document.getElementById('edit-gasto-estado-info').innerText = info;
+
+      openModal('modal-edit-gasto');
+    }
+
+    async function handleEditGastoSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-gasto-id').value;
+      const importe = parseFloat(document.getElementById('edit-gasto-importe').value);
+      const fecha = document.getElementById('edit-gasto-fecha').value;
+      if (isNaN(importe) || importe < 0) { toast("El importe no es válido", "error"); return; }
+
+      const btn = e.target.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.innerText = "Guardando..."; }
+      try {
+        const res = await apiCall("updateGasto", {
+          gastoId: id,
+          gastoData: {
+            encargado: document.getElementById('edit-gasto-encargado').value,
+            apartamento: document.getElementById('edit-gasto-apartamento').value,
+            concepto: document.getElementById('edit-gasto-concepto').value.trim(),
+            importe: importe,
+            fecha: fecha
+          }
+        });
+        if (res && res.success) {
+          closeModal('modal-edit-gasto');
+          toast("Gasto actualizado correctamente", "success");
+          // Si la fecha cambia de mes, se muestra el nuevo mes para no perder de vista el gasto
+          const fm = /^(\d{4})-(\d{2})-/.exec(fecha || '');
+          const sm = document.getElementById('admin-cont-filter-mes'), sa = document.getElementById('admin-cont-filter-anno');
+          if (fm && sm && sa && (sm.value || sa.value)) {
+            if (sm.value) sm.value = String(parseInt(fm[2], 10));
+            if (sa.value) sa.value = fm[1];
+          }
+          loadAdminContabilita();
+        } else {
+          toast((res && res.error) || "No se pudo guardar. Comprueba que el backend esté en la versión 5.6.", "error");
+        }
+      } catch (err) {
+        toast("Error de red", "error");
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerText = "Guardar Cambios"; }
+      }
     }
 
     async function cambiarEstadoGasto(id, nuevoEstado) {
@@ -3281,6 +3554,7 @@
           let badge = '<span class="badge badge-warning">🟡 Pendiente</span>';
           if (g.estado === 'aprobado') badge = '<span class="badge badge-success">🟢 Aprobado</span>';
           if (g.estado === 'rechazado') badge = '<span class="badge badge-danger">🔴 Rechazado</span>';
+          if (g.estado === 'pagado') badge = '<span class="badge badge-success">💶 Pagado</span>';
 
           const canDelete = (g.estado === 'pendiente');
 
@@ -3492,6 +3766,52 @@
         backgroundAutoRefresh();
       }
     });
+
+    // ===== Tablas -> tarjetas en pantallas estrechas: etiqueta cada celda con el título de su columna =====
+    (function initTablasResponsive() {
+      function etiquetarTabla(table) {
+        if (!table) return;
+        const heads = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+        table.querySelectorAll('tbody tr').forEach(tr => {
+          let idx = 0;
+          Array.from(tr.children).forEach(td => {
+            if (td.tagName !== 'TD') return;
+            const span = td.colSpan || 1;
+            if (td.hasAttribute('data-label')) { idx += span; return; }
+            if (span > 1) {
+              td.setAttribute('data-label', '');
+              td.classList.add('td-full');
+            } else {
+              const label = heads[idx] || '';
+              const esAccion = /acci[oó]n|acciones/i.test(label);
+              td.setAttribute('data-label', esAccion ? '' : label);
+              if (esAccion) td.classList.add('td-actions');
+            }
+            const w = document.createElement('div');
+            w.className = 'td-val';
+            while (td.firstChild) w.appendChild(td.firstChild);
+            td.appendChild(w);
+            idx += span;
+          });
+        });
+      }
+
+      function arrancar() {
+        const obs = new MutationObserver(muts => {
+          const vistas = new Set();
+          muts.forEach(m => {
+            const t = m.target && m.target.closest ? m.target.closest('table') : null;
+            if (t && !vistas.has(t)) { vistas.add(t); etiquetarTabla(t); }
+          });
+        });
+        document.querySelectorAll('.table-container table').forEach(t => {
+          etiquetarTabla(t);
+          t.querySelectorAll('tbody, thead').forEach(sec => obs.observe(sec, { childList: true }));
+        });
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arrancar);
+      else arrancar();
+    })();
 </script>
 </body>
 </html>
